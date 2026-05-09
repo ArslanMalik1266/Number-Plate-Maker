@@ -115,7 +115,7 @@ private fun PreviewLabel(label: String) {
 private fun PlateCard(plate: PlateModel) {
     Card(
         modifier = Modifier.wrapContentSize(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
     ) {
         Box(
             contentAlignment = Alignment.Center

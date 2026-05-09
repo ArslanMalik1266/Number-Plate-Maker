@@ -1,5 +1,7 @@
 package com.webscare.numberplatemaker.domain.models
 
+import org.jetbrains.compose.resources.DrawableResource
+
 
 data class PlateUiState(
     val currentStep: PlateStep = PlateStep.VehicleSelection,
@@ -10,44 +12,66 @@ data class PlateUiState(
 )
 
 data class PlateModel(
-    // 1. Primary Identity
     val vehicleType: VehicleType,
     val province: Province,
     val side: PlateSide,
     val registrationNumber: String,
-
-    // 2. Physical Layout (Data Layer se dynamic ayengi)
-    val dimensions: PlateDimensions,
-
-    // 3. Ultra-Level Styling Control
-    val bgColor: Long,          // E.g., 0xFFFFFFFF
-    val textColor: Long,        // E.g., 0xFF000000
-    val borderColor: Long,      // E.g., 0xFF1A1A1A (Professional contrast)
-    val borderWidth: Float,     // Control thickness of the plate edge
-
-    // 4. Content Formatting
-    val formatHint: String,     // User guide: "ABC-1234"
-    val bottomLabel: String?    // E.g., "PUNJAB" or "ICT"
+    val formatHint: String,
+    val config: PlateConfig
 )
 
-sealed class PlateStep {
-    data object VehicleSelection : PlateStep()
-    data object ProvinceSelection : PlateStep()
-    data object InputNumber : PlateStep()
-    data object Preview : PlateStep()
+data class PlateConfig(
+    val bgColor: Long,
+    val textColor: Long,
+    val stripColor: Long,
+    val borderColor: Long = 0xFF1A1A1A,
+    val borderWidth: Float = 2f,
+    val stripOrientation: StripOrientation,
+    val stripSizeFraction: Float = 0.20f,
+    val stripContent: StripContent = StripContent(),
+    val dimensions: PlateDimensions,
+)
+
+data class StripContent(
+    // Logo
+    val logoRes: DrawableResource? = null,
+    val logoAlignment: LogoAlignment = LogoAlignment.NONE,
+    val logoSizeFraction: Float = 0.75f,
+
+    // Province full text (e.g. "PUNJAB", "SINDH")
+    val provinceText: String? = null,
+    val provinceTextAlignment: TextAlignment = TextAlignment.NONE,
+    val provinceTextSizeFraction: Float = 0.20f,
+    val provinceTextColor: Long = 0xFF000000,
+
+    // Province short code (e.g. "PB", "SND") — kuch plates pe hota hai
+    val provinceCodeText: String? = null,
+    val provinceCodeAlignment: TextAlignment = TextAlignment.NONE,
+    val provinceCodeSizeFraction: Float = 0.15f,
+    val provinceCodeColor: Long = 0xFF000000,
+
+    // City text (e.g. "LHR", "KHI")
+    val cityText: String? = null,
+    val cityTextAlignment: TextAlignment = TextAlignment.NONE,
+    val cityTextSizeFraction: Float = 0.15f,
+    val cityTextColor: Long = 0xFF000000,
+
+    // Strip background drawable (Sindh special case)
+    val stripBgDrawable: DrawableResource? = null,
+    val stripBgAlignment: StripBackgroundAlignment = StripBackgroundAlignment.NONE,
+
+)
+
+data class PlateDimensions(
+    val width: Float,
+    val height: Float
+)
+
+enum class PlateSide {
+    FRONT,
+    BACK
 }
 
-enum class VehicleType {
-    MOTORBIKE,
-    COMMERCIAL_VEHICLE,
-    PRIVATE_CAR,
-    HEAVY_TRANSPORT,
-    RICKSHAW,
-    DIPLOMATIC,
-    GOVERNMENT,
-    COMMERCIAL,
-    ELECTRIC_VEHICLE
-}
 enum class Province {
     PUNJAB,
     SINDH,
@@ -57,7 +81,53 @@ enum class Province {
     AJK,
     GB
 }
-enum class PlateSide { FRONT, BACK }
 
-data class PlateDimensions(val width: Float, val height: Float)
+enum class VehicleType {
+    MOTORBIKE,
+    PRIVATE_CAR,
+    HEAVY_TRANSPORT,
+    RICKSHAW,
+    DIPLOMATIC,
+    GOVERNMENT,
+    COMMERCIAL,
+    ELECTRIC_VEHICLE
+}
+
+enum class StripOrientation {
+    HORIZONTAL_TOP,
+    VERTICAL_LEFT,
+    NONE
+}
+
+enum class LogoAlignment {
+    STRIP_TOP_CENTRE,
+    TOP_LEFT,
+    CENTRE,
+    CENTRE_LEFT,
+    NONE
+
+}
+
+enum class TextAlignment {
+    CENTRE_TOP,
+    BOTTOM_LEFT,
+    CENTRE_LEFT,
+    BOTTOM_CENTRE,
+    NONE
+}
+enum class StripBackgroundAlignment {
+    NONE,
+    TOP_LEFT,
+    TOP_HORIZONTAL
+
+}
+
+
+
+sealed class PlateStep {
+    data object VehicleSelection : PlateStep()
+    data object ProvinceSelection : PlateStep()
+    data object InputNumber : PlateStep()
+    data object Preview : PlateStep()
+}
 
