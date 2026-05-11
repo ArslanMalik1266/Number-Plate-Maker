@@ -1,23 +1,20 @@
 package com.webscare.numberplatemaker.ui
 
 import androidx.lifecycle.ViewModel
-import com.webscare.numberplatemaker.domain.models.PlateDimensions
 import com.webscare.numberplatemaker.domain.models.PlateModel
 import com.webscare.numberplatemaker.domain.models.PlateSide
 import com.webscare.numberplatemaker.domain.models.PlateStep
 import com.webscare.numberplatemaker.domain.models.PlateUiState
 import com.webscare.numberplatemaker.domain.models.Province
 import com.webscare.numberplatemaker.domain.models.VehicleType
-import com.webscare.numberplatemaker.domain.usecases.GeneratePlateUseCase
-import com.webscare.numberplatemaker.domain.usecases.GetPlateStylingUseCase
+import com.webscare.numberplatemaker.domain.usecases.GetPlateConfigUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 class PlateViewModel(
-    private val generatePlateUseCase: GeneratePlateUseCase,
-   private val getPlateStylingUseCase: GetPlateStylingUseCase
+    private val getPlateConfigUseCase: GetPlateConfigUseCase
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PlateUiState())
     val uiState: StateFlow<PlateUiState> = _uiState.asStateFlow()
@@ -44,38 +41,40 @@ class PlateViewModel(
         _uiState.update { it.copy(registrationNumber = number) }
     }
 
-    fun onGeneratePlate() {
-        _uiState.update { state ->
-            val vehicle = state.selectedVehicle ?: VehicleType.PRIVATE_CAR
-            val province = state.selectedProvince ?: Province.PUNJAB
+    fun generatePlatePreview(regNumber: String) {
+        val currentState = _uiState.value
+        val vehicle = currentState.selectedVehicle
+        val province = currentState.selectedProvince
 
-            // UseCase ko call karke full PlateModel lein (jis mein colors, borders sab hon)
-            // Default side hum FRONT rakhte hain preview start karne ke liye
-            val generatedPlate = generatePlateUseCase(
+        if (vehicle != null && province != null && regNumber.isNotBlank()) {
+            _uiState.update { it.copy(loading = true) }
+
+            // UseCase se data bundle mangwaya
+            val previewData = getPlateConfigUseCase(
                 vehicleType = vehicle,
                 province = province,
-                side = PlateSide.FRONT,
-                registrationNumber = state.registrationNumber
+                regNumber = regNumber
             )
 
-            state.copy(
-                currentStep = PlateStep.Preview,
-                finalPlate = generatedPlate,
-            )
+            // State mein Front aur Back dono ko alag save kiya
+            _uiState.update {
+                it.copy(
+                    registrationNumber = regNumber,
+                    frontPlate = PlateModel(
+                        side = PlateSide.FRONT,
+                        config = previewData.frontPlate
+                    ),
+                    backPlate = PlateModel(
+                        side = PlateSide.BACK,
+                        config = previewData.backPlate
+                    ),
+                    currentStep = PlateStep.Preview,
+                    loading = false
+                )
+            }
         }
     }
-    fun getPlateForSide(side: PlateSide): PlateModel? {
-        val state = _uiState.value
-        val vehicle = state.selectedVehicle ?: return null
-        val province = state.selectedProvince ?: return null
 
-        return generatePlateUseCase(
-            vehicleType = vehicle,
-            province = province,
-            side = side,
-            registrationNumber = state.registrationNumber
-        )
-    }
     fun navigateBack() {
         val previousStep = when (_uiState.value.currentStep) {
             is PlateStep.ProvinceSelection -> PlateStep.VehicleSelection

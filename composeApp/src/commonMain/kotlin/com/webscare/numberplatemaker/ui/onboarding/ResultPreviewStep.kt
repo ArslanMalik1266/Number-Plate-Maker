@@ -11,6 +11,8 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,6 +31,7 @@ fun ResultPreviewStep(
     viewModel: PlateViewModel,
     onReset: () -> Unit
 ) {
+    val uiState by viewModel.uiState.collectAsState()
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -37,6 +40,7 @@ fun ResultPreviewStep(
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
         Spacer(modifier = Modifier.height(24.dp))
 
         // --- 1. Compact Header ---
@@ -56,20 +60,19 @@ fun ResultPreviewStep(
         Spacer(modifier = Modifier.height(24.dp))
 
         if (plate != null) {
-            // --- 2. Side by Side or Compact Previews ---
+            // --- FRONT PLATE ---
             PreviewLabel("FRONT PLATE")
-            val frontPlate = viewModel.getPlateForSide(PlateSide.FRONT)
-            frontPlate?.let { PlateCard(plate = it) }
+            uiState.frontPlate?.let { PlateCard(plate = it) }
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            // --- REAR PLATE ---
             PreviewLabel("REAR PLATE")
-            val backPlate = viewModel.getPlateForSide(PlateSide.BACK)
-            backPlate?.let { PlateCard(plate = it) }
+            uiState.backPlate?.let { PlateCard(plate = it) }
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // --- 3. Configuration Details (Compact) ---
+            // --- DETAILS ---
             DetailBox(plate)
         }
 
@@ -114,14 +117,24 @@ private fun PreviewLabel(label: String) {
 @Composable
 private fun PlateCard(plate: PlateModel) {
     Card(
-        modifier = Modifier.wrapContentSize(),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        modifier = Modifier
+            .fillMaxWidth() // Plate ko poori width do taake wo proportional scale ho
+            .padding(vertical = 8.dp),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
         Box(
+            modifier = Modifier
+                .fillMaxWidth()
+            ,
             contentAlignment = Alignment.Center
         ) {
-            // Scale down plate preview if it feels too large
-            PlateCanvas(plate = plate)
+            // Humara Universal Canvas call ho raha hai
+            PlateCanvas(
+                config = plate.config,
+                modifier = Modifier.fillMaxWidth() // Thori si side space chori
+            )
         }
     }
 }
@@ -137,15 +150,37 @@ private fun DetailBox(plate: PlateModel) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "Vehicle Info", // "Configuration" se "Info" (Short labels)
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                text = "Vehicle Info",
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            DetailItem(Icons.Outlined.DirectionsCar, "Type", plate.vehicleType.name.replace("_", " "))
-            DetailItem(Icons.Outlined.LocationOn, "Province", plate.province.name)
-            DetailItem(Icons.Outlined.Info, "Number", plate.registrationNumber.uppercase())
+            // 1. Province Name (e.g., SINDH -> Sindh)
+            DetailItem(
+                icon = Icons.Outlined.LocationOn,
+                label = "Province",
+                value = plate.config.provinceName.lowercase().replaceFirstChar { it.uppercase() }
+            )
+
+            // 2. City Name (Agar empty ho to 'All Punjab' ya 'Universal' dikha sakte hain)
+            if (plate.config.cityName.isNotEmpty()) {
+                DetailItem(
+                    icon = Icons.Outlined.Info,
+                    label = "City",
+                    value = plate.config.cityName
+                )
+            }
+
+            // 3. Registration Number (Hamesha Uppercase aur Bold)
+            DetailItem(
+                icon = Icons.Outlined.DirectionsCar,
+                label = "Reg Number",
+                value = plate.config.registrationNumber.uppercase()
+            )
         }
     }
 }

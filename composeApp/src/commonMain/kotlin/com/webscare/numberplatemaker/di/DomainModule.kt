@@ -1,11 +1,9 @@
 package com.webscare.numberplatemaker.di
 
-import com.webscare.numberplatemaker.domain.usecases.GeneratePlateUseCase
-import com.webscare.numberplatemaker.domain.usecases.GetPlateStylingUseCase
+import com.webscare.numberplatemaker.domain.usecases.GetPlateConfigUseCase
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 
 val domainModule = module {
-    factoryOf(::GeneratePlateUseCase)
-    factoryOf(::GetPlateStylingUseCase)
+    factoryOf(::GetPlateConfigUseCase)
 }

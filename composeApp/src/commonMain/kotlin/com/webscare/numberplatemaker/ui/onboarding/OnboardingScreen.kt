@@ -62,14 +62,14 @@ fun OnboardingScreen() {
                         onBack = { viewModel.navigateBack() },
                         onGenerate = {
                             // Generating for both sides is handled inside ViewModel
-                            viewModel.onGeneratePlate()
+                            viewModel.generatePlatePreview(uiState.registrationNumber)
                         }
                     )
                 }
 
                 is PlateStep.Preview -> {
                     ResultPreviewStep(
-                        plate = uiState.finalPlate,
+                        plate = uiState.frontPlate,
                         viewModel = viewModel,
                         onReset = { viewModel.resetFlow() }
                     )

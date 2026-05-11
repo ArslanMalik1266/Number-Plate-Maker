@@ -57,7 +57,8 @@ fun VehicleSelectionStep(onVehicleSelected: (VehicleType) -> Unit) {
             VehicleType.HEAVY_TRANSPORT to "Heavy Vehicle / Truck",
             VehicleType.RICKSHAW to "Rickshaw",
             VehicleType.DIPLOMATIC to "Diplomatic / Mission",
-            VehicleType.ELECTRIC_VEHICLE to "Electric (EV)"
+            VehicleType.ELECTRIC_CAR to "Electric CAR",
+            VehicleType.ELECTRIC_BIKE to "Electric Bike"
         )
 
         LazyVerticalGrid(
@@ -79,7 +80,7 @@ private fun VehicleCard(label: String, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .height(100.dp)
-            .addPressEffect{ onClick() },
+            .addPressEffect { onClick() },
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
