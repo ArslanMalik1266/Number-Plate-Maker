@@ -18,6 +18,7 @@ object StyleResolver {
             Province.PUNJAB -> getPunjabStyle(vehicle, side)
             Province.KPK -> getKpkStyle(vehicle, side)
             Province.BALOCHISTAN -> getBalochistanStyle(vehicle, side)
+            Province.AJK -> getAjkStyle(vehicle, side)
             Province.SINDH -> getSindhStyle(vehicle, side)
             else -> getDefaultStyle()
         }
@@ -36,7 +37,7 @@ object StyleResolver {
         }
         return when (vehicle) {
             VehicleType.MOTORBIKE,
-            VehicleType.MOTORBIKE-> {
+            VehicleType.ELECTRIC_BIKE-> {
                 if (side == PlateSide.FRONT) {
                     // Bike Front
                     StyleConfig(
@@ -98,7 +99,8 @@ object StyleResolver {
             else -> 0xFFFFFFFFL to 0xFF1A1A1AL // Default White background, Black text
         }
         return when (vehicle) {
-            VehicleType.MOTORBIKE -> {
+            VehicleType.MOTORBIKE,
+            VehicleType.ELECTRIC_BIKE -> {
                 if (side == PlateSide.FRONT) {
                     // Bike Front
                     StyleConfig(
@@ -106,6 +108,8 @@ object StyleResolver {
                         textColor = text,
                         stripColor = 0,
                         hasStrip = false,
+                        cityName = "PESHAWAR",
+                        cityNamelignment = TextAlignment.NONE,
                         stripOrientation = StripOrientation.NONE,
                         logoAlignment = LogoAlignment.Kpk_logo,
                         provinceName = "KHYBER PAKHTUNKHWA",
@@ -119,6 +123,8 @@ object StyleResolver {
                         bgColor = background,
                         textColor = text,
                         stripColor = 0,
+                        cityName = "PESHAWAR",
+                        cityNamelignment = TextAlignment.NONE,
                         hasStrip = false,
                         stripOrientation = StripOrientation.NONE,
                         logoAlignment = LogoAlignment.Kpk_logo,
@@ -158,13 +164,16 @@ object StyleResolver {
             else -> 0xFFFFFFFFL to 0xFF1A1A1AL // Default White background, Black text
         }
         return when (vehicle) {
-            VehicleType.MOTORBIKE -> {
+            VehicleType.MOTORBIKE,
+            VehicleType.ELECTRIC_BIKE -> {
                 if (side == PlateSide.FRONT) {
                     // Bike Front
                     StyleConfig(
                         bgColor = background,
                         textColor = text,
                         stripColor = 0,
+                        cityName = "QUETTA",
+                        cityNamelignment = TextAlignment.NONE,
                         hasStrip = false,
                         stripOrientation = StripOrientation.NONE,
                         logoAlignment = LogoAlignment.Kpk_logo,
@@ -180,6 +189,8 @@ object StyleResolver {
                         textColor = text,
                         stripColor = 0,
                         hasStrip = false,
+                        cityName = "QUETTA",
+                        cityNamelignment = TextAlignment.NONE,
                         stripOrientation = StripOrientation.NONE,
                         logoAlignment = LogoAlignment.Kpk_logo,
                         provinceName = "BALOCHISTAN",
@@ -209,34 +220,130 @@ object StyleResolver {
     }
 
     private fun getSindhStyle(vehicle: VehicleType, side: PlateSide): StyleConfig {
-        return if (vehicle == VehicleType.MOTORBIKE) {
-            // Sindh Bike Style (Aksar yellow/white mix ya specific formats)
-            StyleConfig(
-                bgColor = 0xFFFFFFFF,
-                textColor = 0xFF1A1A1A,
-                hasStrip = true,
-                stripColor = 0xFF8B0000,
-                stripOrientation = StripOrientation.Horizontal_TOP, // Bike pe aksar upar strip hoti h
-                logoAlignment = LogoAlignment.Sindh_logo,
-                regAlignment = TextAlignment.CENTRE,
-                provinceName = "SINDH",
-                provinceAlignment = TextAlignment.TOP_CENTRE
-            )
-        } else {
-            // Sindh Car Style
-            StyleConfig(
-                bgColor = 0xFFFFFFFF,
-                textColor = 0xFF1A1A1A,
-                hasStrip = true,
-                stripColor = 0xFF8B0000,
-                stripOrientation = StripOrientation.VERTICAL_LEFT,
-                logoAlignment = LogoAlignment.Sindh_logo,
-                regAlignment = TextAlignment.CENTRE,
-                provinceName = "SINDH",
-                provinceAlignment = TextAlignment.TOP_CENTRE
-            )
+        val (background, text) = when (vehicle) {
+            VehicleType.COMMERCIAL -> 0xFFFFD700L to 0xFF1A1A1AL // Yellow background, Black text
+            VehicleType.GOVERNMENT -> 0xFF004B23 to 0xFFFFFFFFL // Green background, White text
+            VehicleType.DIPLOMATIC -> 0xFFE33528 to 0xFFFFFFFFL // Red background, White text
+            VehicleType.RICKSHAW -> 0xFFFFD700L to 0xFF1A1A1AL
+            VehicleType.ELECTRIC_BIKE, VehicleType.ELECTRIC_CAR -> 0xFF0A4624 to 0xFFFFFFFFL
+            else -> 0xFFFFFFFFL to 0xFF1A1A1AL // Default White background, Black text
+        }
+        return when (vehicle) {
+            VehicleType.MOTORBIKE,
+            VehicleType.ELECTRIC_BIKE -> {
+                if (side == PlateSide.FRONT) {
+                    // Bike Front
+                    StyleConfig(
+                        bgColor = background,
+                        textColor = text,
+                        stripColor = 0,
+                        hasStrip = false,
+                        stripOrientation = StripOrientation.NONE,
+                        logoAlignment = LogoAlignment.Kpk_logo,
+                        provinceName = "BALOCHISTAN",
+                        regAlignment = TextAlignment.CENTRE,
+                        provinceAlignment = TextAlignment.LEFT_CENTRE,
+                        provinceCodeAlignment = TextAlignment.BOTTOM_LEFT
+                    )
+                } else {
+                    // Bike Rear
+                    StyleConfig(
+                        bgColor = background,
+                        textColor = text,
+                        stripColor = 0,
+                        hasStrip = false,
+                        cityName = "QUETTA",
+                        cityNamelignment = TextAlignment.NONE,
+                        stripOrientation = StripOrientation.NONE,
+                        logoAlignment = LogoAlignment.Kpk_logo,
+                        provinceName = "BALOCHISTAN",
+                        regAlignment = TextAlignment.CENTRE,
+                        provinceAlignment = TextAlignment.TOP_CENTRE,
+                        provinceCodeAlignment = TextAlignment.TOP_CENTRE
+                    )
+                }
+            }
+            else -> {
+                // Standard Punjab Car Style
+                StyleConfig(
+                    bgColor = background,
+                    textColor = text,
+                    stripColor = 0,
+                    hasStrip = false,
+                    stripOrientation = StripOrientation.NONE,
+                    logoAlignment = LogoAlignment.Sindh_logo,
+                    provinceName = "SINDH",
+                    regAlignment = TextAlignment.CENTRE,
+                    provinceAlignment = TextAlignment.BOTTOM_CENTRE,
+                )
+            }
         }
     }
+
+    private fun getAjkStyle(vehicle: VehicleType, side: PlateSide): StyleConfig {
+        val (background, text) = when (vehicle) {
+            VehicleType.COMMERCIAL -> 0xFFFFD700L to 0xFF1A1A1AL // Yellow background, Black text
+            VehicleType.GOVERNMENT -> 0xFF004B23 to 0xFFFFFFFFL // Green background, White text
+            VehicleType.DIPLOMATIC -> 0xFFE33528 to 0xFFFFFFFFL // Red background, White text
+            VehicleType.RICKSHAW -> 0xFFFFD700L to 0xFF1A1A1AL
+            VehicleType.ELECTRIC_BIKE, VehicleType.ELECTRIC_CAR -> 0xFF0A4624 to 0xFFFFFFFFL
+            else -> 0xFFFFFFFFL to 0xFF1A1A1AL // Default White background, Black text
+        }
+        return when (vehicle) {
+            VehicleType.MOTORBIKE,
+            VehicleType.ELECTRIC_BIKE -> {
+                if (side == PlateSide.FRONT) {
+                    // Bike Front
+                    StyleConfig(
+                        bgColor = background,
+                        textColor = text,
+                        stripColor = 0,
+                        cityName = "MIRPUR",
+                        cityNamelignment = TextAlignment.BOTTOM_CENTRE,
+                        hasStrip = false,
+                        stripOrientation = StripOrientation.NONE,
+                        logoAlignment = LogoAlignment.AJK_logo,
+                        provinceName = "AJ&K",
+                        regAlignment = TextAlignment.CENTRE,
+                        provinceAlignment = TextAlignment.TOP_CENTRE,
+                    )
+                } else {
+                    // Bike Rear
+                    StyleConfig(
+                        bgColor = background,
+                        textColor = text,
+                        stripColor = 0,
+                        hasStrip = false,
+                        cityName = "MIRPUR",
+                        cityNamelignment = TextAlignment.BOTTOM_CENTRE,
+                        stripOrientation = StripOrientation.NONE,
+                        logoAlignment = LogoAlignment.AJK_logo,
+                        provinceName = "AJ&K",
+                        regAlignment = TextAlignment.CENTRE,
+                        provinceAlignment = TextAlignment.TOP_CENTRE,
+                        provinceCodeAlignment = TextAlignment.TOP_CENTRE
+                    )
+                }
+            }
+            else -> {
+                // Standard Punjab Car Style
+                StyleConfig(
+                    bgColor = background,
+                    textColor = text,
+                    stripColor = 0,
+                    hasStrip = false,
+                    cityNamelignment = TextAlignment.BOTTOM_CENTRE,
+                    stripOrientation = StripOrientation.NONE,
+                    logoAlignment = LogoAlignment.AJK_logo,
+                    provinceName = "AJ&K",
+                    cityName = "MIRPUR",
+                    regAlignment = TextAlignment.BOTTOM_CENTRE,
+                    provinceAlignment = TextAlignment.TOP_CENTRE,
+                )
+            }
+        }
+    }
+
 
     // Default Fallback
     private fun getDefaultStyle() = StyleConfig(
@@ -259,7 +366,7 @@ object StyleResolver {
         val cityNamelignment: TextAlignment = TextAlignment.NONE,
         val stripOrientation: StripOrientation,
         val logoAlignment: LogoAlignment,
-        val provinceName: String,
+        val provinceName: String = "",
         val regAlignment: TextAlignment,
         val provinceCode: String = "",
         val provinceAlignment: TextAlignment,

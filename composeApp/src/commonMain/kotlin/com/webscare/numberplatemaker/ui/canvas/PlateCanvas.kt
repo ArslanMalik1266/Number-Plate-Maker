@@ -7,11 +7,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.draw
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.text.*
@@ -22,37 +25,42 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.webscare.numberplatemaker.domain.models.LogoAlignment
 import com.webscare.numberplatemaker.domain.models.PlateConfig
-import com.webscare.numberplatemaker.domain.models.PlateModel
 import com.webscare.numberplatemaker.domain.models.PlateSide
 import com.webscare.numberplatemaker.domain.models.StripOrientation
 import com.webscare.numberplatemaker.domain.models.VehicleType
 import com.webscare.numberplatemaker.ui.theme.PlateTypography
 import com.webscare.numberplatemaker.util.PlatePlatformTextStyle
 import numberplatemaker.composeapp.generated.resources.Res
+import numberplatemaker.composeapp.generated.resources.ajk_logo
+import numberplatemaker.composeapp.generated.resources.ajk_strip_bg
+import numberplatemaker.composeapp.generated.resources.ajrak_bg
 import numberplatemaker.composeapp.generated.resources.balochistan_logo
 import numberplatemaker.composeapp.generated.resources.kpk_logo
 import numberplatemaker.composeapp.generated.resources.punjab_logo
+import numberplatemaker.composeapp.generated.resources.sindh_logo
 import org.jetbrains.compose.resources.painterResource
+import kotlin.math.ceil
 
 @Composable
 fun PlateCanvas(
-    config: PlateConfig,
-    modifier: Modifier = Modifier
+    config: PlateConfig, modifier: Modifier = Modifier
 ) {
     val textMeasurer = rememberTextMeasurer()
     val feFont = PlateTypography.getPlateFont()
     val punjabLogoPainter = painterResource(Res.drawable.punjab_logo)
     val kpkLogoPainter = painterResource(Res.drawable.kpk_logo)
+    val sindhLogoPainter = painterResource(Res.drawable.sindh_logo)
+    val ajkLogoPainter = painterResource(Res.drawable.ajk_logo)
+    val ajkStripLogoPainter = painterResource(Res.drawable.ajk_strip_bg)
+    val ajrakPainter = painterResource(Res.drawable.ajrak_bg)
+
     val BalochistanLogoPainter = painterResource(Res.drawable.balochistan_logo)
 
     Canvas(
-        modifier = modifier
-            .aspectRatio(config.dimensions.width / config.dimensions.height)
+        modifier = modifier.aspectRatio(config.dimensions.width / config.dimensions.height)
             .clipToBounds() // Ensure drawing doesn't bleed out
-    )
-    {
+    ) {
         val w = size.width
         val h = size.height
 
@@ -105,25 +113,14 @@ fun PlateCanvas(
 
             "PUNJAB" -> {
                 when (config.vehicleType) {
-                    VehicleType.MOTORBIKE,
-                    VehicleType.ELECTRIC_BIKE-> {
+                    VehicleType.MOTORBIKE, VehicleType.ELECTRIC_BIKE -> {
                         if (config.side == PlateSide.FRONT) {
                             drawPunjabBikeFront(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                punjabLogoPainter
+                                config, textMeasurer, w, h, feFont, punjabLogoPainter
                             )
                         } else {
                             drawPunjabBikeRear(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                punjabLogoPainter
+                                config, textMeasurer, w, h, feFont, punjabLogoPainter
                             )
                         }
                     }
@@ -202,68 +199,124 @@ fun PlateCanvas(
 
             "SINDH" -> {
                 when (config.vehicleType) {
-                    VehicleType.MOTORBIKE,
-                    VehicleType.ELECTRIC_BIKE -> {
-                        // Sindh ki bike front aur back aksar ek jesi rectangular ya square hoti hain
+                    VehicleType.MOTORBIKE, VehicleType.ELECTRIC_BIKE -> {
                         if (config.side == PlateSide.FRONT) {
-                            //               drawSindhBikeFront(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
+                            drawSindhBikeFront(
+                                config = config,
+                                textMeasurer = textMeasurer,
+                                w = w,
+                                h = h,
+                                registrationFont = feFont,
+                                logoPainter = sindhLogoPainter
+                            )
                         } else {
-                            //          drawSindhBikeRear(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
+                            drawSindhBikeRear(
+                                config = config,
+                                textMeasurer = textMeasurer,
+                                w = w,
+                                h = h,
+                                registrationFont = feFont,
+                                logoPainter = sindhLogoPainter
+                            )
                         }
                     }
 
                     VehicleType.PRIVATE_CAR -> {
-                        // Sindh Car: Vertical strip ke sath center aligned text
-                        //       drawSindhCarPlate(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
+                        drawSindhCarPlate(
+                            config = config,
+                            textMeasurer = textMeasurer,
+                            w = w,
+                            h = h,
+                            registrationFont = feFont,
+                            logoPainter = sindhLogoPainter,
+                            ajrakBgPainter = ajrakPainter
+                        )
                     }
 
                     VehicleType.COMMERCIAL -> {
-                        //      drawSindhCommercialPlate(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
+                        drawSindhCarPlate(
+                            config = config,
+                            textMeasurer = textMeasurer,
+                            w = w,
+                            h = h,
+                            registrationFont = feFont,
+                            logoPainter = sindhLogoPainter,
+                            ajrakBgPainter = ajrakPainter
+                        )
                     }
 
                     VehicleType.GOVERNMENT -> {
-                        //     drawSindhGovtPlate(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
+                        drawSindhCarPlate(
+                            config = config,
+                            textMeasurer = textMeasurer,
+                            w = w,
+                            h = h,
+                            registrationFont = feFont,
+                            logoPainter = sindhLogoPainter,
+                            ajrakBgPainter = ajrakPainter
+                        )
                     }
 
                     VehicleType.ELECTRIC_CAR -> {
-                        //      drawSindhEVPlate(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
+                        drawSindhCarPlate(
+                            config = config,
+                            textMeasurer = textMeasurer,
+                            w = w,
+                            h = h,
+                            registrationFont = feFont,
+                            logoPainter = sindhLogoPainter,
+                            ajrakBgPainter = ajrakPainter
+                        )
                     }
 
                     VehicleType.RICKSHAW -> {
-                        //      drawSindhRickshawPlate(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
+                        drawSindhCarPlate(
+                            config = config,
+                            textMeasurer = textMeasurer,
+                            w = w,
+                            h = h,
+                            registrationFont = feFont,
+                            logoPainter = sindhLogoPainter,
+                            ajrakBgPainter = ajrakPainter
+                        )
                     }
 
                     VehicleType.HEAVY_TRANSPORT -> {
-                        //      drawSindhHeavyPlate(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
+                        drawSindhCarPlate(
+                            config = config,
+                            textMeasurer = textMeasurer,
+                            w = w,
+                            h = h,
+                            registrationFont = feFont,
+                            logoPainter = sindhLogoPainter,
+                            ajrakBgPainter = ajrakPainter
+                        )
                     }
 
                     VehicleType.DIPLOMATIC -> {
-                        //  drawSindhDiplomaticPlate(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
+                        drawSindhCarPlate(
+                            config = config,
+                            textMeasurer = textMeasurer,
+                            w = w,
+                            h = h,
+                            registrationFont = feFont,
+                            logoPainter = sindhLogoPainter,
+                            ajrakBgPainter = ajrakPainter
+                        )
                     }
                 }
             }
 
             "KHYBER PAKHTUNKHWA" -> {
                 when (config.vehicleType) {
-                    VehicleType.MOTORBIKE,
-                    VehicleType.ELECTRIC_BIKE -> {
+                    VehicleType.MOTORBIKE, VehicleType.ELECTRIC_BIKE -> {
                         if (config.side == PlateSide.FRONT) {
                             drawKpkBikeFront(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                kpkLogoPainter
+                                config, textMeasurer, w, h, feFont, kpkLogoPainter
                             )
                         } else {
                             drawKpkBikeRear(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                kpkLogoPainter
+                                config, textMeasurer, w, h, feFont, kpkLogoPainter
                             )
                         }
                     }
@@ -343,31 +396,28 @@ fun PlateCanvas(
 
             "BALOCHISTAN" -> {
                 when (config.vehicleType) {
-                    VehicleType.MOTORBIKE,
-                    VehicleType.ELECTRIC_BIKE -> {
+                    VehicleType.MOTORBIKE, VehicleType.ELECTRIC_BIKE -> {
                         if (config.side == PlateSide.FRONT) {
-                            drawKpkBikeFront(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                BalochistanLogoPainter
+                            drawBalochistanBikeFront(
+                                config, textMeasurer, w, h, feFont, BalochistanLogoPainter
                             )
                         } else {
-                            drawKpkBikeRear(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                BalochistanLogoPainter
+                            drawBalochistanBikeRear(
+                                config, textMeasurer, w, h, feFont, BalochistanLogoPainter
                             )
                         }
                     }
 
                     VehicleType.PRIVATE_CAR -> {
-                        drawKpkCarPlate(config, textMeasurer, w, h, feFont, BalochistanLogoPainter)
+
+                        drawBalochistanCarPlate(
+                            config,
+                            textMeasurer,
+                            w,
+                            h,
+                            feFont,
+                            BalochistanLogoPainter
+                        )
                     }
 
                     VehicleType.COMMERCIAL -> {
@@ -440,8 +490,7 @@ fun PlateCanvas(
 
             "ISLAMABAD" -> {
                 when (config.vehicleType) {
-                    VehicleType.MOTORBIKE,
-                    VehicleType.ELECTRIC_BIKE-> {
+                    VehicleType.MOTORBIKE, VehicleType.ELECTRIC_BIKE -> {
                         if (config.side == PlateSide.FRONT) {
                             //      drawIslamabadBikeFront(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
                         } else {
@@ -481,90 +530,198 @@ fun PlateCanvas(
                 }
             }
 
-            "AJK" -> {
+            "AJ&K" -> {
                 when (config.vehicleType) {
-                    VehicleType.MOTORBIKE,
-                    VehicleType.ELECTRIC_BIKE -> {
+                    VehicleType.MOTORBIKE, VehicleType.ELECTRIC_BIKE -> {
                         if (config.side == PlateSide.FRONT) {
-                            //      drawAjkBikeFront(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
+                            drawAjkBikeFront(
+                                config, textMeasurer, w, h, feFont, BalochistanLogoPainter
+                            )
                         } else {
-                            //     drawAjkBikeRear(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
+                            drawAjkBikeRear(
+                                config, textMeasurer, w, h, feFont, BalochistanLogoPainter
+                            )
                         }
                     }
 
                     VehicleType.PRIVATE_CAR -> {
-                        // AJK Car: Top center "AJK" ya "AZAD KASHMIR" text
-                        //    drawAjkCarPlate(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
+                        drawAjkCarPlate(
+                            config,
+                            textMeasurer,
+                            w,
+                            h,
+                            feFont,
+                            ajkLogoPainter,
+                            ajkStripLogoPainter
+                        )
                     }
 
                     VehicleType.COMMERCIAL -> {
-                        //    drawAjkCommercialPlate(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
+                        drawAjkCarPlate(
+                            config,
+                            textMeasurer,
+                            w,
+                            h,
+                            feFont,
+                            ajkLogoPainter,
+                            ajkStripLogoPainter
+                        )
                     }
 
                     VehicleType.GOVERNMENT -> {
-                        // Green background plates for AJK Govt
-                        //     drawAjkGovtPlate(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
+                        drawAjkCarPlate(
+                            config,
+                            textMeasurer,
+                            w,
+                            h,
+                            feFont,
+                            ajkLogoPainter,
+                            ajkStripLogoPainter
+                        )
                     }
 
                     VehicleType.RICKSHAW -> {
-                        //      drawAjkRickshawPlate(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
+                        drawAjkCarPlate(
+                            config,
+                            textMeasurer,
+                            w,
+                            h,
+                            feFont,
+                            ajkLogoPainter,
+                            ajkStripLogoPainter
+                        )
                     }
 
                     VehicleType.HEAVY_TRANSPORT -> {
-                        //       drawAjkHeavyPlate(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
+                        drawAjkCarPlate(
+                            config,
+                            textMeasurer,
+                            w,
+                            h,
+                            feFont,
+                            ajkLogoPainter,
+                            ajkStripLogoPainter
+                        )
                     }
 
                     VehicleType.ELECTRIC_CAR -> {
-                        //       drawAjkEVPlate(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
+                        drawAjkCarPlate(
+                            config,
+                            textMeasurer,
+                            w,
+                            h,
+                            feFont,
+                            ajkLogoPainter,
+                            ajkStripLogoPainter
+                        )
                     }
 
                     VehicleType.DIPLOMATIC -> {
-                        //        drawAjkDiplomaticPlate(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
+                        drawAjkCarPlate(
+                            config,
+                            textMeasurer,
+                            w,
+                            h,
+                            feFont,
+                            ajkLogoPainter,
+                            ajkStripLogoPainter
+                        )
                     }
                 }
             }
 
-            "GB" -> {
-                when (config.vehicleType) {
-                    VehicleType.MOTORBIKE,
-                    VehicleType.ELECTRIC_BIKE -> {
-                        if (config.side == PlateSide.FRONT) {
-                            //      drawGbBikeFront(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
-                        } else {
-                            //        drawGbBikeRear(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
-                        }
-                    }
-
-                    VehicleType.PRIVATE_CAR -> {
-                        // GB Car: Clean and modern layout
-                        //   drawGbCarPlate(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
-                    }
-
-                    VehicleType.COMMERCIAL -> {
-                        //    drawGbCommercialPlate(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
-                    }
-
-                    VehicleType.GOVERNMENT -> {
-                        //     drawGbGovtPlate(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
-                    }
-
-                    VehicleType.RICKSHAW -> {
-                        //     drawGbRickshawPlate(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
-                    }
-
-                    VehicleType.HEAVY_TRANSPORT -> {
-                        //     drawGbHeavyPlate(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
-                    }
-
-                    VehicleType.ELECTRIC_CAR -> {
-                        //   drawGbEVPlate(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
-                    }
-
-                    VehicleType.DIPLOMATIC -> {
-                        //       drawGbDiplomaticPlate(config, textMeasurer, w, h, usableW, usableH, contentOffsetX, contentOffsetY)
-                    }
-                }
-            }
+//            "GB" -> {
+//                when (config.vehicleType) {
+//                    VehicleType.MOTORBIKE, VehicleType.ELECTRIC_BIKE -> {
+//                        if (config.side == PlateSide.FRONT) {
+//                            drawAjkBikeFront(
+//                                config, textMeasurer, w, h, feFont, BalochistanLogoPainter
+//                            )
+//                        } else {
+//                            drawAjkBikeRear(
+//                                config, textMeasurer, w, h, feFont, BalochistanLogoPainter
+//                            )
+//                        }
+//                    }
+//
+//                    VehicleType.PRIVATE_CAR -> {
+//                        drawAjkCarPlate(
+//                            config,
+//                            textMeasurer,
+//                            w,
+//                            h,
+//                            feFont,
+//                            ajkLogoPainter
+//                        )
+//                    }
+//
+//                    VehicleType.COMMERCIAL -> {
+//                        drawAjkCarPlate(
+//                            config,
+//                            textMeasurer,
+//                            w,
+//                            h,
+//                            feFont,
+//                            ajkLogoPainter
+//                        )
+//                    }
+//
+//                    VehicleType.GOVERNMENT -> {
+//                        drawAjkCarPlate(
+//                            config,
+//                            textMeasurer,
+//                            w,
+//                            h,
+//                            feFont,
+//                            ajkLogoPainter
+//                        )
+//                    }
+//
+//                    VehicleType.RICKSHAW -> {
+//                        drawAjkCarPlate(
+//                            config,
+//                            textMeasurer,
+//                            w,
+//                            h,
+//                            feFont,
+//                            ajkLogoPainter
+//                        )
+//                    }
+//
+//                    VehicleType.HEAVY_TRANSPORT -> {
+//                        drawAjkCarPlate(
+//                            config,
+//                            textMeasurer,
+//                            w,
+//                            h,
+//                            feFont,
+//                            ajkLogoPainter
+//                        )
+//                    }
+//
+//                    VehicleType.ELECTRIC_CAR -> {
+//                        drawAjkCarPlate(
+//                            config,
+//                            textMeasurer,
+//                            w,
+//                            h,
+//                            feFont,
+//                            ajkLogoPainter
+//                        )
+//                    }
+//
+//                    VehicleType.DIPLOMATIC -> {
+//                        drawAjkCarPlate(
+//                            config,
+//                            textMeasurer,
+//                            w,
+//                            h,
+//                            feFont,
+//                            ajkLogoPainter
+//                        )
+//                    }
+//                }
+//            }
         }
     }
 
@@ -596,8 +753,7 @@ private fun DrawScope.drawPunjabBikeFront(
     }
 
     val provText = textMeasurer.measure(
-        text = config.provinceName,
-        style = TextStyle(
+        text = config.provinceName, style = TextStyle(
             fontSize = (h * 0.12f).toSp(),
             fontWeight = FontWeight.ExtraBold,
             color = textColor,
@@ -611,9 +767,7 @@ private fun DrawScope.drawPunjabBikeFront(
         val codeText = textMeasurer.measure(
             text = config.provinceCode, // "ET&NC"
             style = TextStyle(
-                fontSize = (h * 0.12f).toSp(),
-                fontWeight = FontWeight.Bold,
-                color = textColor
+                fontSize = (h * 0.12f).toSp(), fontWeight = FontWeight.Bold, color = textColor
             )
         )
         val codeX = absoluteLogoCenterX - (codeText.size.width / 2)
@@ -629,22 +783,18 @@ private fun DrawScope.drawPunjabBikeFront(
                 addStyle(
                     style = SpanStyle(
                         letterSpacing = (-15).sp
-                    ),
-                    start = index,
-                    end = index + 1
+                    ), start = index, end = index + 1
                 )
             }
         }
     }
     var regText = textMeasurer.measure(
-        text = customRegString,
-        style = TextStyle(
+        text = customRegString, style = TextStyle(
             fontSize = regFontSize,
             fontFamily = registrationFont,
             platformStyle = PlatePlatformTextStyle,
             lineHeightStyle = LineHeightStyle(
-                alignment = LineHeightStyle.Alignment.Center,
-                trim = LineHeightStyle.Trim.Both
+                alignment = LineHeightStyle.Alignment.Center, trim = LineHeightStyle.Trim.Both
             ),
         )
     )
@@ -652,8 +802,7 @@ private fun DrawScope.drawPunjabBikeFront(
         val scaleFactor = maxRegWidth / regText.size.width
         regFontSize = (regFontSize.value * scaleFactor).sp
         regText = textMeasurer.measure(
-            text = customRegString,
-            style = TextStyle(
+            text = customRegString, style = TextStyle(
                 fontSize = regFontSize,
                 color = textColor,
                 fontFamily = registrationFont,
@@ -701,11 +850,8 @@ private fun DrawScope.drawPunjabBikeRear(
 
     // "PUNJAB" Text
     val provText = textMeasurer.measure(
-        text = config.provinceName.uppercase(),
-        style = TextStyle(
-            fontSize = (h * 0.04f).toSp(),
-            fontWeight = FontWeight.ExtraBold,
-            color = textColor
+        text = config.provinceName.uppercase(), style = TextStyle(
+            fontSize = (h * 0.04f).toSp(), fontWeight = FontWeight.ExtraBold, color = textColor
         )
     )
     val provX = leftMargin + (logoWidth / 2) - (provText.size.width / 2)
@@ -713,11 +859,8 @@ private fun DrawScope.drawPunjabBikeRear(
 
     if (config.provinceCode.isNotEmpty()) {
         val codeText = textMeasurer.measure(
-            text = config.provinceCode,
-            style = TextStyle(
-                fontSize = (h * 0.04f).toSp(),
-                fontWeight = FontWeight.Bold,
-                color = textColor
+            text = config.provinceCode, style = TextStyle(
+                fontSize = (h * 0.04f).toSp(), fontWeight = FontWeight.Bold, color = textColor
             )
         )
         val codeX = leftMargin + (logoWidth / 2) - (codeText.size.width / 2)
@@ -734,21 +877,17 @@ private fun DrawScope.drawPunjabBikeRear(
 
     do {
         regLayoutResult = textMeasurer.measure(
-            text = formattedReg,
-            style = TextStyle(
+            text = formattedReg, style = TextStyle(
                 fontSize = regFontSize,
                 fontFamily = registrationFont,
                 color = textColor,
                 textAlign = TextAlign.Center,
                 platformStyle = PlatePlatformTextStyle,
                 lineHeightStyle = LineHeightStyle(
-                    alignment = LineHeightStyle.Alignment.Center,
-                    trim = LineHeightStyle.Trim.Both
+                    alignment = LineHeightStyle.Alignment.Center, trim = LineHeightStyle.Trim.Both
                 ),
                 lineHeight = regFontSize * 1.05f
-            ),
-            constraints = Constraints(maxWidth = maxRegWidth.toInt()),
-            softWrap = true
+            ), constraints = Constraints(maxWidth = maxRegWidth.toInt()), softWrap = true
         )
 
         if (regLayoutResult.lineCount > 2) {
@@ -797,8 +936,7 @@ private fun DrawScope.drawPunjabCarPlate(
 
     // "PUNJAB" (Big Center Text)
     val provText = textMeasurer.measure(
-        text = config.provinceName.uppercase(),
-        style = TextStyle(
+        text = config.provinceName.uppercase(), style = TextStyle(
             fontSize = (h * 0.16f).toSp(),
             fontWeight = FontWeight.ExtraBold,
             color = textColor,
@@ -807,20 +945,15 @@ private fun DrawScope.drawPunjabCarPlate(
     )
 // Vertical center alignment with logo
     drawText(
-        provText,
-        topLeft = Offset(
-            (w / 2) - (provText.size.width / 2),
-            topRowCenterY - (provText.size.height / 2)
+        provText, topLeft = Offset(
+            (w / 2) - (provText.size.width / 2), topRowCenterY - (provText.size.height / 2)
         )
     )
 
     if (config.provinceCode.isNotEmpty()) {
         val codeText = textMeasurer.measure(
-            text = config.provinceCode,
-            style = TextStyle(
-                fontSize = (h * 0.08f).toSp(),
-                fontWeight = FontWeight.Bold,
-                color = textColor
+            text = config.provinceCode, style = TextStyle(
+                fontSize = (h * 0.08f).toSp(), fontWeight = FontWeight.Bold, color = textColor
             )
         )
         // Offset check: w minus padding minus text width
@@ -841,24 +974,20 @@ private fun DrawScope.drawPunjabCarPlate(
             if (char == ' ') {
                 // Space ki jagah gap control karne ke liye negative letterSpacing
                 addStyle(
-                    style = SpanStyle(letterSpacing = (-15).sp),
-                    start = index,
-                    end = index + 1
+                    style = SpanStyle(letterSpacing = (-15).sp), start = index, end = index + 1
                 )
             }
         }
     }
 
     var regLayoutResult = textMeasurer.measure(
-        text = customRegString,
-        style = TextStyle(
+        text = customRegString, style = TextStyle(
             fontSize = regFontSize,
             fontFamily = registrationFont,
             color = textColor,
             platformStyle = PlatePlatformTextStyle,
             lineHeightStyle = LineHeightStyle(
-                alignment = LineHeightStyle.Alignment.Center,
-                trim = LineHeightStyle.Trim.Both
+                alignment = LineHeightStyle.Alignment.Center, trim = LineHeightStyle.Trim.Both
             )
         )
     )
@@ -867,8 +996,7 @@ private fun DrawScope.drawPunjabCarPlate(
         val factor = maxRegWidth / regLayoutResult.size.width
         regFontSize = (regFontSize.value * factor).sp
         regLayoutResult = textMeasurer.measure(
-            text = customRegString,
-            style = TextStyle(
+            text = customRegString, style = TextStyle(
                 fontSize = regFontSize,
                 fontFamily = registrationFont,
                 color = textColor,
@@ -883,11 +1011,9 @@ private fun DrawScope.drawPunjabCarPlate(
     // --- 3. APPLY VERTICAL STRETCH (1.1x) ---
     withTransform({
         scale(
-            scaleX = 1.0f,
-            scaleY = 1.3f, // 1.1x Stretch as requested
+            scaleX = 1.0f, scaleY = 1.3f, // 1.1x Stretch as requested
             pivot = Offset(
-                regX + regLayoutResult.size.width / 2f,
-                regY + regLayoutResult.size.height / 2f
+                regX + regLayoutResult.size.width / 2f, regY + regLayoutResult.size.height / 2f
             )
         )
     }) {
@@ -919,26 +1045,25 @@ private fun DrawScope.drawKpkBikeFront(
             draw(size = Size(finalWidth, finalHeight))
         }
     }
+    val provTextValue = config.provinceName.uppercase().replace(" ", "\n")
 
     val provText = textMeasurer.measure(
-        text = config.provinceName,
-        style = TextStyle(
-            fontSize = (h * 0.12f).toSp(),
+        text = provTextValue, style = TextStyle(
+            fontSize = (h * 0.06f).toSp(),
             fontWeight = FontWeight.ExtraBold,
             color = textColor,
-            letterSpacing = 1.sp
+            textAlign = TextAlign.Center
         )
     )
     val provX = absoluteLogoCenterX - (provText.size.width / 2)
     drawText(provText, topLeft = Offset(provX, h * 0.52f))
 
-    if (config.provinceCode.isNotEmpty()) {
+
+    if (config.cityName.isNotEmpty()) {
         val codeText = textMeasurer.measure(
-            text = config.provinceCode, // "ET&NC"
+            text = config.cityName, // "ET&NC"
             style = TextStyle(
-                fontSize = (h * 0.12f).toSp(),
-                fontWeight = FontWeight.Bold,
-                color = textColor
+                fontSize = (h * 0.06f).toSp(), fontWeight = FontWeight.Bold, color = textColor
             )
         )
         val codeX = absoluteLogoCenterX - (codeText.size.width / 2)
@@ -954,22 +1079,18 @@ private fun DrawScope.drawKpkBikeFront(
                 addStyle(
                     style = SpanStyle(
                         letterSpacing = (-15).sp
-                    ),
-                    start = index,
-                    end = index + 1
+                    ), start = index, end = index + 1
                 )
             }
         }
     }
     var regText = textMeasurer.measure(
-        text = customRegString,
-        style = TextStyle(
+        text = customRegString, style = TextStyle(
             fontSize = regFontSize,
             fontFamily = registrationFont,
             platformStyle = PlatePlatformTextStyle,
             lineHeightStyle = LineHeightStyle(
-                alignment = LineHeightStyle.Alignment.Center,
-                trim = LineHeightStyle.Trim.Both
+                alignment = LineHeightStyle.Alignment.Center, trim = LineHeightStyle.Trim.Both
             ),
         )
     )
@@ -977,8 +1098,7 @@ private fun DrawScope.drawKpkBikeFront(
         val scaleFactor = maxRegWidth / regText.size.width
         regFontSize = (regFontSize.value * scaleFactor).sp
         regText = textMeasurer.measure(
-            text = customRegString,
-            style = TextStyle(
+            text = customRegString, style = TextStyle(
                 fontSize = regFontSize,
                 color = textColor,
                 fontFamily = registrationFont,
@@ -1024,29 +1144,27 @@ private fun DrawScope.drawKpkBikeRear(
         }
     }
 
-    // "PUNJAB" Text
+    val provTextValue = config.provinceName.uppercase().replace(" ", "\n")
+
     val provText = textMeasurer.measure(
-        text = config.provinceName.uppercase(),
-        style = TextStyle(
-            fontSize = (h * 0.04f).toSp(),
+        text = provTextValue, style = TextStyle(
+            fontSize = (h * 0.03f).toSp(),
             fontWeight = FontWeight.ExtraBold,
-            color = textColor
+            color = textColor,
+            textAlign = TextAlign.Center
         )
     )
     val provX = leftMargin + (logoWidth / 2) - (provText.size.width / 2)
     drawText(provText, topLeft = Offset(provX, h * 0.31f))
 
-    if (config.provinceCode.isNotEmpty()) {
+    if (config.cityName.isNotEmpty()) {
         val codeText = textMeasurer.measure(
-            text = config.provinceCode,
-            style = TextStyle(
-                fontSize = (h * 0.04f).toSp(),
-                fontWeight = FontWeight.Bold,
-                color = textColor
+            text = config.cityName, style = TextStyle(
+                fontSize = (h * 0.03f).toSp(), fontWeight = FontWeight.Bold, color = textColor
             )
         )
         val codeX = leftMargin + (logoWidth / 2) - (codeText.size.width / 2)
-        drawText(codeText, topLeft = Offset(codeX, h * 0.36f))
+        drawText(codeText, topLeft = Offset(codeX, h * 0.39f))
     }
 
     // --- 2. REGISTRATION (Total Plate Center) ---
@@ -1059,21 +1177,17 @@ private fun DrawScope.drawKpkBikeRear(
 
     do {
         regLayoutResult = textMeasurer.measure(
-            text = formattedReg,
-            style = TextStyle(
+            text = formattedReg, style = TextStyle(
                 fontSize = regFontSize,
                 fontFamily = registrationFont,
                 color = textColor,
                 textAlign = TextAlign.Center,
                 platformStyle = PlatePlatformTextStyle,
                 lineHeightStyle = LineHeightStyle(
-                    alignment = LineHeightStyle.Alignment.Center,
-                    trim = LineHeightStyle.Trim.Both
+                    alignment = LineHeightStyle.Alignment.Center, trim = LineHeightStyle.Trim.Both
                 ),
                 lineHeight = regFontSize * 1.05f
-            ),
-            constraints = Constraints(maxWidth = maxRegWidth.toInt()),
-            softWrap = true
+            ), constraints = Constraints(maxWidth = maxRegWidth.toInt()), softWrap = true
         )
 
         if (regLayoutResult.lineCount > 2) {
@@ -1107,13 +1221,33 @@ private fun DrawScope.drawKpkCarPlate(
 
     // --- 1. TOP & BOTTOM BOUNDARIES ---
     val topRowCenterY = h * 0.15f
-    val provText = textMeasurer.measure(config.provinceName.uppercase(), TextStyle(fontSize = (h * 0.12f).toSp(), fontWeight = FontWeight.ExtraBold, color = textColor))
-    drawText(provText, topLeft = Offset((w / 2) - (provText.size.width / 2), topRowCenterY - (provText.size.height / 2)))
+    val provText = textMeasurer.measure(
+        config.provinceName.uppercase(),
+        TextStyle(
+            fontSize = (h * 0.12f).toSp(),
+            fontWeight = FontWeight.ExtraBold,
+            color = textColor
+        )
+    )
+    drawText(
+        provText,
+        topLeft = Offset(
+            (w / 2) - (provText.size.width / 2),
+            topRowCenterY - (provText.size.height / 2)
+        )
+    )
     val provinceBottomEdge = (topRowCenterY - (provText.size.height / 2)) + provText.size.height
 
     var cityTopEdge = h
     if (config.cityName.isNotEmpty()) {
-        val cityNameText = textMeasurer.measure(config.cityName.uppercase(), TextStyle(fontSize = (h * 0.12f).toSp(), fontWeight = FontWeight.ExtraBold, color = textColor))
+        val cityNameText = textMeasurer.measure(
+            config.cityName.uppercase(),
+            TextStyle(
+                fontSize = (h * 0.12f).toSp(),
+                fontWeight = FontWeight.ExtraBold,
+                color = textColor
+            )
+        )
         val cityY = (h * 0.90f) - (cityNameText.size.height / 2)
         drawText(cityNameText, topLeft = Offset((w / 2) - (cityNameText.size.width / 2), cityY))
         cityTopEdge = cityY
@@ -1123,24 +1257,34 @@ private fun DrawScope.drawKpkCarPlate(
     val parts = config.registrationNumber.trim().split(" ")
     val firstPart = parts.getOrNull(0) ?: ""
     val secondPart = parts.getOrNull(1) ?: ""
+    val verticalShift = -(h * 0.06f)
 
     // Overall size thora chota karne ke liye available height 75% kar di
     val maxAvailableHeight = (cityTopEdge - provinceBottomEdge) * 0.75f
     val baseFontSize = (h * 0.40f).toSp()
 
-    val layout1 = textMeasurer.measure(firstPart, TextStyle(fontSize = baseFontSize, fontFamily = registrationFont))
-    val layout2 = textMeasurer.measure(secondPart, TextStyle(fontSize = baseFontSize, fontFamily = registrationFont))
+    val layout1 = textMeasurer.measure(
+        firstPart,
+        TextStyle(fontSize = baseFontSize, fontFamily = registrationFont)
+    )
+    val layout2 = textMeasurer.measure(
+        secondPart,
+        TextStyle(fontSize = baseFontSize, fontFamily = registrationFont)
+    )
 
     // Logo size: Text ki height ka 70% (size chota karne ke liye)
     val logoHeight = layout1.size.height.toFloat() * 0.7f
-    val logoWidth = logoHeight * (logoPainter.intrinsicSize.width / logoPainter.intrinsicSize.height)
+    val logoWidth =
+        logoHeight * (logoPainter.intrinsicSize.width / logoPainter.intrinsicSize.height)
     val internalGap = w * 0.03f
 
     // Total width check
-    val totalComponentWidth = layout1.size.width + logoWidth + (internalGap * 2) + layout2.size.width
+    val totalComponentWidth =
+        layout1.size.width + logoWidth + (internalGap * 2) + layout2.size.width
     val maxAvailableWidth = w - (horizontalPadding * 2)
 
-    val widthFactor = if (totalComponentWidth > maxAvailableWidth) maxAvailableWidth / totalComponentWidth else 1f
+    val widthFactor =
+        if (totalComponentWidth > maxAvailableWidth) maxAvailableWidth / totalComponentWidth else 1f
     val heightFactor = maxAvailableHeight / layout1.size.height
     val finalScale = minOf(widthFactor, heightFactor)
 
@@ -1149,8 +1293,14 @@ private fun DrawScope.drawKpkCarPlate(
     val finalLogoHeight = logoHeight * finalScale
     val finalInternalGap = internalGap * finalScale
 
-    val finalLayout1 = textMeasurer.measure(firstPart, TextStyle(fontSize = finalFontSize, fontFamily = registrationFont, color = textColor))
-    val finalLayout2 = textMeasurer.measure(secondPart, TextStyle(fontSize = finalFontSize, fontFamily = registrationFont, color = textColor))
+    val finalLayout1 = textMeasurer.measure(
+        firstPart,
+        TextStyle(fontSize = finalFontSize, fontFamily = registrationFont, color = textColor)
+    )
+    val finalLayout2 = textMeasurer.measure(
+        secondPart,
+        TextStyle(fontSize = finalFontSize, fontFamily = registrationFont, color = textColor)
+    )
 
     // --- 3. VERTICAL CENTERING (Text Focused) ---
     val gapCenterY = provinceBottomEdge + ((cityTopEdge - provinceBottomEdge) / 2f)
@@ -1161,13 +1311,24 @@ private fun DrawScope.drawKpkCarPlate(
     val logoY = textY + (finalLayout1.size.height / 2f) - (finalLogoHeight / 2f)
 
     // --- 4. DRAWING ---
-    val finalTotalWidth = finalLayout1.size.width + finalLogoWidth + (finalInternalGap * 2) + finalLayout2.size.width
+    // --- 4. DRAWING ---
+    val finalTotalWidth =
+        finalLayout1.size.width + finalLogoWidth + (finalInternalGap * 2) + finalLayout2.size.width
     val startX = (w - finalTotalWidth) / 2f
 
-    // First Part
-    drawText(finalLayout1, topLeft = Offset(startX, textY))
+    // 1. First Part (e.g., ALE) - Scaled and Offset
+    withTransform({
+        // Vertically stretch the text by 1.3x
+        scale(
+            scaleX = 1.0f,
+            scaleY = 1.3f,
+            pivot = Offset(startX, textY + finalLayout1.size.height / 2f)
+        )
+    }) {
+        drawText(finalLayout1, topLeft = Offset(startX, textY + verticalShift))
+    }
 
-    // Logo (Centered with Text)
+    // 2. Logo (Original shape maintain karega)
     val logoX = startX + finalLayout1.size.width + finalInternalGap
     translate(left = logoX, top = logoY) {
         with(logoPainter) {
@@ -1175,9 +1336,17 @@ private fun DrawScope.drawKpkCarPlate(
         }
     }
 
-    // Second Part
+    // 3. Second Part (e.g., 931) - Scaled and Offset
     val secondPartX = logoX + finalLogoWidth + finalInternalGap
-    drawText(finalLayout2, topLeft = Offset(secondPartX, textY))
+    withTransform({
+        scale(
+            scaleX = 1.0f,
+            scaleY = 1.3f,
+            pivot = Offset(secondPartX, textY + finalLayout2.size.height / 2f)
+        )
+    }) {
+        drawText(finalLayout2, topLeft = Offset(secondPartX, textY + verticalShift))
+    }
 }
 
 //BALOCHISTAN
@@ -1207,9 +1376,8 @@ private fun DrawScope.drawBalochistanBikeFront(
     }
 
     val provText = textMeasurer.measure(
-        text = config.provinceName,
-        style = TextStyle(
-            fontSize = (h * 0.12f).toSp(),
+        text = config.provinceName, style = TextStyle(
+            fontSize = (h * 0.08f).toSp(),
             fontWeight = FontWeight.ExtraBold,
             color = textColor,
             letterSpacing = 1.sp
@@ -1218,17 +1386,15 @@ private fun DrawScope.drawBalochistanBikeFront(
     val provX = absoluteLogoCenterX - (provText.size.width / 2)
     drawText(provText, topLeft = Offset(provX, h * 0.52f))
 
-    if (config.provinceCode.isNotEmpty()) {
+    if (config.cityName.isNotEmpty()) {
         val codeText = textMeasurer.measure(
-            text = config.provinceCode, // "ET&NC"
+            text = config.cityName, // "ET&NC"
             style = TextStyle(
-                fontSize = (h * 0.12f).toSp(),
-                fontWeight = FontWeight.Bold,
-                color = textColor
+                fontSize = (h * 0.08f).toSp(), fontWeight = FontWeight.Bold, color = textColor
             )
         )
         val codeX = absoluteLogoCenterX - (codeText.size.width / 2)
-        drawText(codeText, topLeft = Offset(codeX, h * 0.67f))
+        drawText(codeText, topLeft = Offset(codeX, h * 0.65f))
     }
     val maxRegWidth = w - (leftMargin + finalWidth + (w * 0.08f))
     var regFontSize = (h * 0.56f).toSp()
@@ -1240,22 +1406,18 @@ private fun DrawScope.drawBalochistanBikeFront(
                 addStyle(
                     style = SpanStyle(
                         letterSpacing = (-15).sp
-                    ),
-                    start = index,
-                    end = index + 1
+                    ), start = index, end = index + 1
                 )
             }
         }
     }
     var regText = textMeasurer.measure(
-        text = customRegString,
-        style = TextStyle(
+        text = customRegString, style = TextStyle(
             fontSize = regFontSize,
             fontFamily = registrationFont,
             platformStyle = PlatePlatformTextStyle,
             lineHeightStyle = LineHeightStyle(
-                alignment = LineHeightStyle.Alignment.Center,
-                trim = LineHeightStyle.Trim.Both
+                alignment = LineHeightStyle.Alignment.Center, trim = LineHeightStyle.Trim.Both
             ),
         )
     )
@@ -1263,8 +1425,7 @@ private fun DrawScope.drawBalochistanBikeFront(
         val scaleFactor = maxRegWidth / regText.size.width
         regFontSize = (regFontSize.value * scaleFactor).sp
         regText = textMeasurer.measure(
-            text = customRegString,
-            style = TextStyle(
+            text = customRegString, style = TextStyle(
                 fontSize = regFontSize,
                 color = textColor,
                 fontFamily = registrationFont,
@@ -1310,25 +1471,19 @@ private fun DrawScope.drawBalochistanBikeRear(
         }
     }
 
-    // "PUNJAB" Text
+    // "BALOCHISTAN" Text
     val provText = textMeasurer.measure(
-        text = config.provinceName.uppercase(),
-        style = TextStyle(
-            fontSize = (h * 0.04f).toSp(),
-            fontWeight = FontWeight.ExtraBold,
-            color = textColor
+        text = config.provinceName.uppercase(), style = TextStyle(
+            fontSize = (h * 0.03f).toSp(), fontWeight = FontWeight.ExtraBold, color = textColor
         )
     )
     val provX = leftMargin + (logoWidth / 2) - (provText.size.width / 2)
     drawText(provText, topLeft = Offset(provX, h * 0.31f))
 
-    if (config.provinceCode.isNotEmpty()) {
+    if (config.cityName.isNotEmpty()) {
         val codeText = textMeasurer.measure(
-            text = config.provinceCode,
-            style = TextStyle(
-                fontSize = (h * 0.04f).toSp(),
-                fontWeight = FontWeight.Bold,
-                color = textColor
+            text = config.cityName, style = TextStyle(
+                fontSize = (h * 0.03f).toSp(), fontWeight = FontWeight.Bold, color = textColor
             )
         )
         val codeX = leftMargin + (logoWidth / 2) - (codeText.size.width / 2)
@@ -1345,21 +1500,17 @@ private fun DrawScope.drawBalochistanBikeRear(
 
     do {
         regLayoutResult = textMeasurer.measure(
-            text = formattedReg,
-            style = TextStyle(
+            text = formattedReg, style = TextStyle(
                 fontSize = regFontSize,
                 fontFamily = registrationFont,
                 color = textColor,
                 textAlign = TextAlign.Center,
                 platformStyle = PlatePlatformTextStyle,
                 lineHeightStyle = LineHeightStyle(
-                    alignment = LineHeightStyle.Alignment.Center,
-                    trim = LineHeightStyle.Trim.Both
+                    alignment = LineHeightStyle.Alignment.Center, trim = LineHeightStyle.Trim.Both
                 ),
                 lineHeight = regFontSize * 1.05f
-            ),
-            constraints = Constraints(maxWidth = maxRegWidth.toInt()),
-            softWrap = true
+            ), constraints = Constraints(maxWidth = maxRegWidth.toInt()), softWrap = true
         )
 
         if (regLayoutResult.lineCount > 2) {
@@ -1393,13 +1544,33 @@ private fun DrawScope.drawBalochistanCarPlate(
 
     // --- 1. TOP & BOTTOM BOUNDARIES ---
     val topRowCenterY = h * 0.15f
-    val provText = textMeasurer.measure(config.provinceName.uppercase(), TextStyle(fontSize = (h * 0.12f).toSp(), fontWeight = FontWeight.ExtraBold, color = textColor))
-    drawText(provText, topLeft = Offset((w / 2) - (provText.size.width / 2), topRowCenterY - (provText.size.height / 2)))
+    val provText = textMeasurer.measure(
+        config.provinceName.uppercase(),
+        TextStyle(
+            fontSize = (h * 0.12f).toSp(),
+            fontWeight = FontWeight.ExtraBold,
+            color = textColor
+        )
+    )
+    drawText(
+        provText,
+        topLeft = Offset(
+            (w / 2) - (provText.size.width / 2),
+            topRowCenterY - (provText.size.height / 2)
+        )
+    )
     val provinceBottomEdge = (topRowCenterY - (provText.size.height / 2)) + provText.size.height
 
     var cityTopEdge = h
     if (config.cityName.isNotEmpty()) {
-        val cityNameText = textMeasurer.measure(config.cityName.uppercase(), TextStyle(fontSize = (h * 0.12f).toSp(), fontWeight = FontWeight.ExtraBold, color = textColor))
+        val cityNameText = textMeasurer.measure(
+            config.cityName.uppercase(),
+            TextStyle(
+                fontSize = (h * 0.12f).toSp(),
+                fontWeight = FontWeight.ExtraBold,
+                color = textColor
+            )
+        )
         val cityY = (h * 0.90f) - (cityNameText.size.height / 2)
         drawText(cityNameText, topLeft = Offset((w / 2) - (cityNameText.size.width / 2), cityY))
         cityTopEdge = cityY
@@ -1409,24 +1580,34 @@ private fun DrawScope.drawBalochistanCarPlate(
     val parts = config.registrationNumber.trim().split(" ")
     val firstPart = parts.getOrNull(0) ?: ""
     val secondPart = parts.getOrNull(1) ?: ""
+    val verticalShift = -(h * 0.06f)
 
     // Overall size thora chota karne ke liye available height 75% kar di
     val maxAvailableHeight = (cityTopEdge - provinceBottomEdge) * 0.75f
     val baseFontSize = (h * 0.40f).toSp()
 
-    val layout1 = textMeasurer.measure(firstPart, TextStyle(fontSize = baseFontSize, fontFamily = registrationFont))
-    val layout2 = textMeasurer.measure(secondPart, TextStyle(fontSize = baseFontSize, fontFamily = registrationFont))
+    val layout1 = textMeasurer.measure(
+        firstPart,
+        TextStyle(fontSize = baseFontSize, fontFamily = registrationFont)
+    )
+    val layout2 = textMeasurer.measure(
+        secondPart,
+        TextStyle(fontSize = baseFontSize, fontFamily = registrationFont)
+    )
 
     // Logo size: Text ki height ka 70% (size chota karne ke liye)
     val logoHeight = layout1.size.height.toFloat() * 0.7f
-    val logoWidth = logoHeight * (logoPainter.intrinsicSize.width / logoPainter.intrinsicSize.height)
+    val logoWidth =
+        logoHeight * (logoPainter.intrinsicSize.width / logoPainter.intrinsicSize.height)
     val internalGap = w * 0.03f
 
     // Total width check
-    val totalComponentWidth = layout1.size.width + logoWidth + (internalGap * 2) + layout2.size.width
+    val totalComponentWidth =
+        layout1.size.width + logoWidth + (internalGap * 2) + layout2.size.width
     val maxAvailableWidth = w - (horizontalPadding * 2)
 
-    val widthFactor = if (totalComponentWidth > maxAvailableWidth) maxAvailableWidth / totalComponentWidth else 1f
+    val widthFactor =
+        if (totalComponentWidth > maxAvailableWidth) maxAvailableWidth / totalComponentWidth else 1f
     val heightFactor = maxAvailableHeight / layout1.size.height
     val finalScale = minOf(widthFactor, heightFactor)
 
@@ -1435,25 +1616,42 @@ private fun DrawScope.drawBalochistanCarPlate(
     val finalLogoHeight = logoHeight * finalScale
     val finalInternalGap = internalGap * finalScale
 
-    val finalLayout1 = textMeasurer.measure(firstPart, TextStyle(fontSize = finalFontSize, fontFamily = registrationFont, color = textColor))
-    val finalLayout2 = textMeasurer.measure(secondPart, TextStyle(fontSize = finalFontSize, fontFamily = registrationFont, color = textColor))
+    val finalLayout1 = textMeasurer.measure(
+        firstPart,
+        TextStyle(fontSize = finalFontSize, fontFamily = registrationFont, color = textColor)
+    )
+    val finalLayout2 = textMeasurer.measure(
+        secondPart,
+        TextStyle(fontSize = finalFontSize, fontFamily = registrationFont, color = textColor)
+    )
 
     // --- 3. VERTICAL CENTERING (Text Focused) ---
     val gapCenterY = provinceBottomEdge + ((cityTopEdge - provinceBottomEdge) / 2f)
     val textY = gapCenterY - (finalLayout1.size.height / 2f)
+
 
     // Logo Vertical Center relative to Text
     // Text ki bounding box ke bilkul darmiyan mein logo fit hoga
     val logoY = textY + (finalLayout1.size.height / 2f) - (finalLogoHeight / 2f)
 
     // --- 4. DRAWING ---
-    val finalTotalWidth = finalLayout1.size.width + finalLogoWidth + (finalInternalGap * 2) + finalLayout2.size.width
+    val finalTotalWidth =
+        finalLayout1.size.width + finalLogoWidth + (finalInternalGap * 2) + finalLayout2.size.width
     val startX = (w - finalTotalWidth) / 2f
 
-    // First Part
-    drawText(finalLayout1, topLeft = Offset(startX, textY))
+    // 1. First Part (ALE) - Scaled and Offset
+    withTransform({
+        // 1.3f scaleY text ko lamba karega
+        scale(
+            scaleX = 1.0f,
+            scaleY = 1.3f,
+            pivot = Offset(startX, textY + finalLayout1.size.height / 2f)
+        )
+    }) {
+        drawText(finalLayout1, topLeft = Offset(startX, textY + verticalShift))
+    }
 
-    // Logo (Centered with Text)
+    // 2. Logo (Original Shape, No Offset)
     val logoX = startX + finalLayout1.size.width + finalInternalGap
     translate(left = logoX, top = logoY) {
         with(logoPainter) {
@@ -1461,7 +1659,662 @@ private fun DrawScope.drawBalochistanCarPlate(
         }
     }
 
-    // Second Part
+    // 3. Second Part (931) - Scaled and Offset
     val secondPartX = logoX + finalLogoWidth + finalInternalGap
-    drawText(finalLayout2, topLeft = Offset(secondPartX, textY))
+    withTransform({
+        scale(
+            scaleX = 1.0f,
+            scaleY = 1.3f,
+            pivot = Offset(secondPartX, textY + finalLayout2.size.height / 2f)
+        )
+    }) {
+        drawText(finalLayout2, topLeft = Offset(secondPartX, textY + verticalShift))
+    }
+}
+
+//SINDH
+private fun DrawScope.drawSindhBikeFront(
+    config: PlateConfig,
+    textMeasurer: TextMeasurer,
+    w: Float,
+    h: Float,
+    registrationFont: FontFamily,
+    logoPainter: androidx.compose.ui.graphics.painter.Painter
+) {
+    val textColor = Color(config.textColor)
+    val leftMargin = w * 0.04f
+
+    val logoSize = h * 0.36f
+    val logoCenterX = leftMargin + (logoSize / 2)
+    val intrinsicSize = logoPainter.intrinsicSize
+    val widthToHeightRatio = intrinsicSize.width / intrinsicSize.height
+    val finalWidth = logoSize * widthToHeightRatio
+    val finalHeight = logoSize
+    val absoluteLogoCenterX = leftMargin + (finalWidth / 2)
+    translate(left = leftMargin, top = h * 0.10f) {
+        with(logoPainter) {
+            draw(size = Size(finalWidth, finalHeight))
+        }
+    }
+
+    val provText = textMeasurer.measure(
+        text = config.provinceName, style = TextStyle(
+            fontSize = (h * 0.08f).toSp(),
+            fontWeight = FontWeight.ExtraBold,
+            color = textColor,
+            letterSpacing = 1.sp
+        )
+    )
+    val provX = absoluteLogoCenterX - (provText.size.width / 2)
+    drawText(provText, topLeft = Offset(provX, h * 0.52f))
+
+    if (config.cityName.isNotEmpty()) {
+        val codeText = textMeasurer.measure(
+            text = config.cityName, // "ET&NC"
+            style = TextStyle(
+                fontSize = (h * 0.08f).toSp(), fontWeight = FontWeight.Bold, color = textColor
+            )
+        )
+        val codeX = absoluteLogoCenterX - (codeText.size.width / 2)
+        drawText(codeText, topLeft = Offset(codeX, h * 0.65f))
+    }
+    val maxRegWidth = w - (leftMargin + finalWidth + (w * 0.08f))
+    var regFontSize = (h * 0.56f).toSp()
+    val customRegString = buildAnnotatedString {
+        val rawText = config.registrationNumber
+        append(rawText)
+        rawText.forEachIndexed { index, char ->
+            if (char == ' ') {
+                addStyle(
+                    style = SpanStyle(
+                        letterSpacing = (-15).sp
+                    ), start = index, end = index + 1
+                )
+            }
+        }
+    }
+    var regText = textMeasurer.measure(
+        text = customRegString, style = TextStyle(
+            fontSize = regFontSize,
+            fontFamily = registrationFont,
+            platformStyle = PlatePlatformTextStyle,
+            lineHeightStyle = LineHeightStyle(
+                alignment = LineHeightStyle.Alignment.Center, trim = LineHeightStyle.Trim.Both
+            ),
+        )
+    )
+    if (regText.size.width > maxRegWidth) {
+        val scaleFactor = maxRegWidth / regText.size.width
+        regFontSize = (regFontSize.value * scaleFactor).sp
+        regText = textMeasurer.measure(
+            text = customRegString, style = TextStyle(
+                fontSize = regFontSize,
+                color = textColor,
+                fontFamily = registrationFont,
+                platformStyle = PlatePlatformTextStyle
+            )
+        )
+    }
+    val regX = (leftMargin + finalWidth) + (w - (leftMargin + finalWidth) - regText.size.width) / 2
+    val verticalOffset = regFontSize.value * 0.3f
+    val regY = (h / 2) - (regText.size.height / 2) - verticalOffset
+    withTransform({
+        // scaleX = 1.0 (Normal Width), scaleY = 1.3 (30% more height)
+        // pivot as Offset(regX + width/2, regY + height/2) keeps it centered at its position
+        scale(
+            scaleX = 1.0f,
+            scaleY = 1.3f,
+            pivot = Offset(regX + regText.size.width / 2f, regY + regText.size.height / 2f)
+        )
+    }) {
+        drawText(regText, topLeft = Offset(regX, regY))
+    }
+}
+
+private fun DrawScope.drawSindhBikeRear(
+    config: PlateConfig,
+    textMeasurer: TextMeasurer,
+    w: Float,
+    h: Float,
+    registrationFont: FontFamily,
+    logoPainter: androidx.compose.ui.graphics.painter.Painter
+) {
+    val textColor = Color(config.textColor)
+    val leftMargin = w * 0.06f
+
+    // --- 1. LOGO & PROVINCE BLOCK (Left Side) ---
+    val logoSize = h * 0.12f
+    val logoWidth = logoSize * (logoPainter.intrinsicSize.width / logoPainter.intrinsicSize.height)
+
+    // Logo draw karna
+    translate(left = leftMargin, top = h * 0.18f) {
+        with(logoPainter) {
+            draw(size = Size(logoWidth, logoSize))
+        }
+    }
+
+    // "BALOCHISTAN" Text
+    val provText = textMeasurer.measure(
+        text = config.provinceName.uppercase(), style = TextStyle(
+            fontSize = (h * 0.03f).toSp(), fontWeight = FontWeight.ExtraBold, color = textColor
+        )
+    )
+    val provX = leftMargin + (logoWidth / 2) - (provText.size.width / 2)
+    drawText(provText, topLeft = Offset(provX, h * 0.31f))
+
+    if (config.cityName.isNotEmpty()) {
+        val codeText = textMeasurer.measure(
+            text = config.cityName, style = TextStyle(
+                fontSize = (h * 0.03f).toSp(), fontWeight = FontWeight.Bold, color = textColor
+            )
+        )
+        val codeX = leftMargin + (logoWidth / 2) - (codeText.size.width / 2)
+        drawText(codeText, topLeft = Offset(codeX, h * 0.36f))
+    }
+
+    // --- 2. REGISTRATION (Total Plate Center) ---
+    val formattedReg = config.registrationNumber.replace("-", " ")
+    val horizontalPadding = w * 0.08f
+    val maxRegWidth = w - (horizontalPadding * 2)
+
+    var regFontSize = (h * 0.32f).toSp()
+    var regLayoutResult: TextLayoutResult
+
+    do {
+        regLayoutResult = textMeasurer.measure(
+            text = formattedReg, style = TextStyle(
+                fontSize = regFontSize,
+                fontFamily = registrationFont,
+                color = textColor,
+                textAlign = TextAlign.Center,
+                platformStyle = PlatePlatformTextStyle,
+                lineHeightStyle = LineHeightStyle(
+                    alignment = LineHeightStyle.Alignment.Center, trim = LineHeightStyle.Trim.Both
+                ),
+                lineHeight = regFontSize * 1.05f
+            ), constraints = Constraints(maxWidth = maxRegWidth.toInt()), softWrap = true
+        )
+
+        if (regLayoutResult.lineCount > 2) {
+            regFontSize = (regFontSize.value - 1f).sp
+        }
+    } while (regLayoutResult.lineCount > 2 && regFontSize.value > 10f)
+
+    val visualAdjustment = h * 0.05f
+    // Horizontally and Vertically centered in the whole plate
+    val regX = (w - regLayoutResult.size.width) / 2
+    val regY = (h - regLayoutResult.size.height) / 2 - visualAdjustment
+
+    val scaleY = 1.3f
+    withTransform({
+        scale(scaleX = 1.0f, scaleY = scaleY, pivot = Offset(w / 2, h / 2))
+    }) {
+        drawText(regLayoutResult, topLeft = Offset(regX, regY))
+    }
+}
+
+private fun DrawScope.drawSindhCarPlate(
+    config: PlateConfig,
+    textMeasurer: TextMeasurer,
+    w: Float,
+    h: Float,
+    registrationFont: FontFamily,
+    logoPainter: androidx.compose.ui.graphics.painter.Painter,
+    ajrakBgPainter: androidx.compose.ui.graphics.painter.Painter
+) {
+    val textColor = Color(config.textColor)
+    val horizontalPadding = w * 0.08f
+    val ajrakHeight = h * 0.25f
+    val borderThickness = w * 0.01f
+    val cornerRadius = h * 0.06f
+
+    val roundedPath = Path().apply {
+        addRoundRect(
+            RoundRect(
+                rect = Rect(
+                    left = borderThickness,
+                    top = borderThickness,
+                    right = w - borderThickness,
+                    bottom = ajrakHeight
+                ),
+                topLeft = CornerRadius(cornerRadius),
+                topRight = CornerRadius(cornerRadius),
+                bottomLeft = CornerRadius(0f),
+                bottomRight = CornerRadius(0f)
+            )
+        )
+    }
+    clipPath(roundedPath) {
+        val intrinsicSize = ajrakBgPainter.intrinsicSize
+        val zoomFactor = 1f
+        val scale = (ajrakHeight / intrinsicSize.height) * zoomFactor
+        val scaledWidth = intrinsicSize.width * scale
+        val scaledHeight = intrinsicSize.height * scale
+        val tilesNeeded = ceil((w - (borderThickness * 2)) / scaledWidth).toInt()
+        for (i in 0..tilesNeeded) {
+            val dx = borderThickness + (i * scaledWidth)
+            val dy = borderThickness
+            translate(left = dx, top = dy) {
+                with(ajrakBgPainter) {
+                    draw(size = Size(scaledWidth, scaledHeight))
+                }
+            }
+        }
+    }
+    val ajrakBottomEdge = ajrakHeight
+
+    var provinceTopEdge = h
+    if (config.provinceName.isNotEmpty()) {
+        val provinceNameText = textMeasurer.measure(
+            config.provinceName.uppercase(),
+            TextStyle(
+                fontSize = (h * 0.12f).toSp(),
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 3.sp,
+                color = textColor
+            )
+        )
+        val cityY = (h * 0.90f) - (provinceNameText.size.height / 2)
+        drawText(
+            provinceNameText,
+            topLeft = Offset((w / 2) - (provinceNameText.size.width / 2), cityY)
+        )
+        provinceTopEdge = cityY
+    }
+
+    // --- 2. SPLIT & MEASURE REGISTRATION ---
+    val parts = config.registrationNumber.trim().split(" ")
+    val firstPart = parts.getOrNull(0) ?: ""
+    val secondPart = parts.getOrNull(1) ?: ""
+
+    val maxAvailableHeight = (provinceTopEdge - ajrakBottomEdge) * 0.80f
+    val baseFontSize = (h * 0.44f).toSp()
+
+    val layout1 = textMeasurer.measure(
+        firstPart,
+        TextStyle(fontSize = baseFontSize, fontFamily = registrationFont)
+    )
+    val layout2 = textMeasurer.measure(
+        secondPart,
+        TextStyle(fontSize = baseFontSize, fontFamily = registrationFont)
+    )
+
+    // Logo size: Text ki height ka 70% (size chota karne ke liye)
+    val logoHeight = layout1.size.height.toFloat() * 0.7f
+    val logoWidth =
+        logoHeight * (logoPainter.intrinsicSize.width / logoPainter.intrinsicSize.height)
+    val internalGap = w * 0.03f
+
+    // Total width check
+    val totalComponentWidth =
+        layout1.size.width + logoWidth + (internalGap * 2) + layout2.size.width
+    val maxAvailableWidth = w - (horizontalPadding * 2)
+
+    val widthFactor =
+        if (totalComponentWidth > maxAvailableWidth) maxAvailableWidth / totalComponentWidth else 1f
+    val heightFactor = maxAvailableHeight / layout1.size.height
+    val finalScale = minOf(widthFactor, heightFactor)
+
+    val finalFontSize = (baseFontSize.value * finalScale).sp
+    val finalLogoWidth = logoWidth * finalScale
+    val finalLogoHeight = logoHeight * finalScale
+    val finalInternalGap = internalGap * finalScale
+
+    val finalLayout1 = textMeasurer.measure(
+        firstPart,
+        TextStyle(fontSize = finalFontSize, fontFamily = registrationFont, color = textColor)
+    )
+    val finalLayout2 = textMeasurer.measure(
+        secondPart,
+        TextStyle(fontSize = finalFontSize, fontFamily = registrationFont, color = textColor)
+    )
+
+    // --- 3. VERTICAL CENTERING (Text Focused) ---
+    val gapCenterY = ajrakBottomEdge + ((provinceTopEdge - ajrakBottomEdge) / 2f)
+    val textY = gapCenterY - (finalLayout1.size.height / 2f)
+
+    val verticalShift = -(h * 0.06f)
+    // Logo Vertical Center relative to Text
+    // Text ki bounding box ke bilkul darmiyan mein logo fit hoga
+    val logoY = textY + (finalLayout1.size.height / 2f) - (finalLogoHeight / 2f)
+
+    // --- 4. DRAWING ---
+
+    val finalTotalWidth =
+        finalLayout1.size.width + finalLogoWidth + (finalInternalGap * 2) + finalLayout2.size.width
+    val startX = (w - finalTotalWidth) / 2f
+    withTransform({
+        scale(
+            scaleX = 1.0f,
+            scaleY = 1.3f,
+            pivot = Offset(startX, textY + finalLayout1.size.height / 2f)
+        )
+    }) {
+        drawText(finalLayout1, topLeft = Offset(startX, textY + verticalShift))
+    }
+    val logoX = startX + finalLayout1.size.width + finalInternalGap
+    translate(left = logoX, top = logoY) {
+        with(logoPainter) {
+            draw(size = Size(finalLogoWidth, finalLogoHeight))
+        }
+    }
+    val secondPartX = logoX + finalLogoWidth + finalInternalGap
+    withTransform({
+        scale(
+            scaleX = 1.0f,
+            scaleY = 1.3f,
+            pivot = Offset(secondPartX, textY + finalLayout2.size.height / 2f)
+        )
+    }) {
+        drawText(finalLayout2, topLeft = Offset(secondPartX, textY + verticalShift))
+    }
+}
+
+//GB
+private fun DrawScope.drawAjkBikeFront(
+    config: PlateConfig,
+    textMeasurer: TextMeasurer,
+    w: Float,
+    h: Float,
+    registrationFont: FontFamily,
+    logoPainter: androidx.compose.ui.graphics.painter.Painter
+) {
+    val textColor = Color(config.textColor)
+    val leftMargin = w * 0.04f
+
+    val logoSize = h * 0.36f
+    val logoCenterX = leftMargin + (logoSize / 2)
+    val intrinsicSize = logoPainter.intrinsicSize
+    val widthToHeightRatio = intrinsicSize.width / intrinsicSize.height
+    val finalWidth = logoSize * widthToHeightRatio
+    val finalHeight = logoSize
+    val absoluteLogoCenterX = leftMargin + (finalWidth / 2)
+    translate(left = leftMargin, top = h * 0.10f) {
+        with(logoPainter) {
+            draw(size = Size(finalWidth, finalHeight))
+        }
+    }
+
+    val provText = textMeasurer.measure(
+        text = config.provinceName, style = TextStyle(
+            fontSize = (h * 0.08f).toSp(),
+            fontWeight = FontWeight.ExtraBold,
+            color = textColor,
+            letterSpacing = 1.sp
+        )
+    )
+    val provX = absoluteLogoCenterX - (provText.size.width / 2)
+    drawText(provText, topLeft = Offset(provX, h * 0.52f))
+
+    if (config.cityName.isNotEmpty()) {
+        val codeText = textMeasurer.measure(
+            text = config.cityName, // "ET&NC"
+            style = TextStyle(
+                fontSize = (h * 0.08f).toSp(), fontWeight = FontWeight.Bold, color = textColor
+            )
+        )
+        val codeX = absoluteLogoCenterX - (codeText.size.width / 2)
+        drawText(codeText, topLeft = Offset(codeX, h * 0.65f))
+    }
+    val maxRegWidth = w - (leftMargin + finalWidth + (w * 0.08f))
+    var regFontSize = (h * 0.56f).toSp()
+    val customRegString = buildAnnotatedString {
+        val rawText = config.registrationNumber
+        append(rawText)
+        rawText.forEachIndexed { index, char ->
+            if (char == ' ') {
+                addStyle(
+                    style = SpanStyle(
+                        letterSpacing = (-15).sp
+                    ), start = index, end = index + 1
+                )
+            }
+        }
+    }
+    var regText = textMeasurer.measure(
+        text = customRegString, style = TextStyle(
+            fontSize = regFontSize,
+            fontFamily = registrationFont,
+            platformStyle = PlatePlatformTextStyle,
+            lineHeightStyle = LineHeightStyle(
+                alignment = LineHeightStyle.Alignment.Center, trim = LineHeightStyle.Trim.Both
+            ),
+        )
+    )
+    if (regText.size.width > maxRegWidth) {
+        val scaleFactor = maxRegWidth / regText.size.width
+        regFontSize = (regFontSize.value * scaleFactor).sp
+        regText = textMeasurer.measure(
+            text = customRegString, style = TextStyle(
+                fontSize = regFontSize,
+                color = textColor,
+                fontFamily = registrationFont,
+                platformStyle = PlatePlatformTextStyle
+            )
+        )
+    }
+    val regX = (leftMargin + finalWidth) + (w - (leftMargin + finalWidth) - regText.size.width) / 2
+    val verticalOffset = regFontSize.value * 0.3f
+    val regY = (h / 2) - (regText.size.height / 2) - verticalOffset
+    withTransform({
+        // scaleX = 1.0 (Normal Width), scaleY = 1.3 (30% more height)
+        // pivot as Offset(regX + width/2, regY + height/2) keeps it centered at its position
+        scale(
+            scaleX = 1.0f,
+            scaleY = 1.3f,
+            pivot = Offset(regX + regText.size.width / 2f, regY + regText.size.height / 2f)
+        )
+    }) {
+        drawText(regText, topLeft = Offset(regX, regY))
+    }
+}
+
+private fun DrawScope.drawAjkBikeRear(
+    config: PlateConfig,
+    textMeasurer: TextMeasurer,
+    w: Float,
+    h: Float,
+    registrationFont: FontFamily,
+    logoPainter: androidx.compose.ui.graphics.painter.Painter
+) {
+    val textColor = Color(config.textColor)
+    val leftMargin = w * 0.06f
+
+    // --- 1. LOGO & PROVINCE BLOCK (Left Side) ---
+    val logoSize = h * 0.12f
+    val logoWidth = logoSize * (logoPainter.intrinsicSize.width / logoPainter.intrinsicSize.height)
+
+    // Logo draw karna
+    translate(left = leftMargin, top = h * 0.18f) {
+        with(logoPainter) {
+            draw(size = Size(logoWidth, logoSize))
+        }
+    }
+
+    // "BALOCHISTAN" Text
+    val provText = textMeasurer.measure(
+        text = config.provinceName.uppercase(), style = TextStyle(
+            fontSize = (h * 0.03f).toSp(), fontWeight = FontWeight.ExtraBold, color = textColor
+        )
+    )
+    val provX = leftMargin + (logoWidth / 2) - (provText.size.width / 2)
+    drawText(provText, topLeft = Offset(provX, h * 0.31f))
+
+    if (config.cityName.isNotEmpty()) {
+        val codeText = textMeasurer.measure(
+            text = config.cityName, style = TextStyle(
+                fontSize = (h * 0.03f).toSp(), fontWeight = FontWeight.Bold, color = textColor
+            )
+        )
+        val codeX = leftMargin + (logoWidth / 2) - (codeText.size.width / 2)
+        drawText(codeText, topLeft = Offset(codeX, h * 0.36f))
+    }
+
+    // --- 2. REGISTRATION (Total Plate Center) ---
+    val formattedReg = config.registrationNumber.replace("-", " ")
+    val horizontalPadding = w * 0.08f
+    val maxRegWidth = w - (horizontalPadding * 2)
+
+    var regFontSize = (h * 0.32f).toSp()
+    var regLayoutResult: TextLayoutResult
+
+    do {
+        regLayoutResult = textMeasurer.measure(
+            text = formattedReg, style = TextStyle(
+                fontSize = regFontSize,
+                fontFamily = registrationFont,
+                color = textColor,
+                textAlign = TextAlign.Center,
+                platformStyle = PlatePlatformTextStyle,
+                lineHeightStyle = LineHeightStyle(
+                    alignment = LineHeightStyle.Alignment.Center, trim = LineHeightStyle.Trim.Both
+                ),
+                lineHeight = regFontSize * 1.05f
+            ), constraints = Constraints(maxWidth = maxRegWidth.toInt()), softWrap = true
+        )
+
+        if (regLayoutResult.lineCount > 2) {
+            regFontSize = (regFontSize.value - 1f).sp
+        }
+    } while (regLayoutResult.lineCount > 2 && regFontSize.value > 10f)
+
+    val visualAdjustment = h * 0.05f
+    // Horizontally and Vertically centered in the whole plate
+    val regX = (w - regLayoutResult.size.width) / 2
+    val regY = (h - regLayoutResult.size.height) / 2 - visualAdjustment
+
+    val scaleY = 1.3f
+    withTransform({
+        scale(scaleX = 1.0f, scaleY = scaleY, pivot = Offset(w / 2, h / 2))
+    }) {
+        drawText(regLayoutResult, topLeft = Offset(regX, regY))
+    }
+}
+
+private fun DrawScope.drawAjkCarPlate(
+    config: PlateConfig,
+    textMeasurer: TextMeasurer,
+    w: Float,
+    h: Float,
+    registrationFont: FontFamily,
+    ajkLogoPainter: androidx.compose.ui.graphics.painter.Painter, // Centered Logo
+    ajkStripBg: androidx.compose.ui.graphics.painter.Painter    // Full Height Strip BG
+) {
+    val textColor = Color(config.textColor)
+
+    // --- 0. STRIP AREA CALCULATIONS (25% of Plate) ---
+    val totalStripAreaWidth = w * 0.25f
+
+    // 1. Draw "ajk_strip_bg" (Vertically Full, Horizontally 20% of Plate)
+    val bgWidth = w * 0.20f
+    // Isay hum strip area ke right side par align kar rahe hain taake content se touch ho
+    val bgX = totalStripAreaWidth - bgWidth
+
+    translate(left = bgX, top = 0f) {
+        with(ajkStripBg) {
+            draw(size = Size(bgWidth, h))
+        }
+    }
+
+    // 2. Draw "ajk_logo" (Centered inside the 25% Strip Area)
+    val logoSize = totalStripAreaWidth * 0.6f // Logo thora chota rakha taake center mein fit ho
+    val logoX = (totalStripAreaWidth - logoSize) / 2f
+    val logoY = (h - logoSize) / 2f
+
+    translate(left = logoX, top = logoY) {
+        with(ajkLogoPainter) {
+            draw(size = Size(logoSize, logoSize))
+        }
+    }
+
+    // --- Content Boundaries (Remaining 75%) ---
+    val contentLeftEdge = totalStripAreaWidth
+    val availableContentWidth = w - totalStripAreaWidth
+    val horizontalPadding = availableContentWidth * 0.08f
+
+    // --- 1. PROVINCE & CITY ---
+    val topRowCenterY = h * 0.15f
+    val provText = textMeasurer.measure(
+        config.provinceName.uppercase(),
+        TextStyle(fontSize = (h * 0.12f).toSp(), fontWeight = FontWeight.ExtraBold, color = textColor)
+    )
+    drawText(
+        provText,
+        topLeft = Offset(
+            contentLeftEdge + (availableContentWidth / 2) - (provText.size.width / 2),
+            topRowCenterY - (provText.size.height / 2)
+        )
+    )
+
+    val provinceBottomEdge = (topRowCenterY - (provText.size.height / 2)) + provText.size.height
+
+    var cityTopEdge = h
+    if (config.cityName.isNotEmpty()) {
+        val cityNameText = textMeasurer.measure(
+            config.cityName.uppercase(),
+            TextStyle(fontSize = (h * 0.12f).toSp(), fontWeight = FontWeight.ExtraBold, color = textColor)
+        )
+        val cityY = (h * 0.90f) - (cityNameText.size.height / 2)
+        drawText(
+            cityNameText,
+            topLeft = Offset(contentLeftEdge + (availableContentWidth / 2) - (cityNameText.size.width / 2), cityY)
+        )
+        cityTopEdge = cityY
+    }
+
+    // --- 2. REGISTRATION WITH SQUARE DOT ---
+    val parts = config.registrationNumber.trim().split(" ")
+    val firstPart = parts.getOrNull(0) ?: ""
+    val secondPart = parts.getOrNull(1) ?: ""
+
+    val verticalShift = -(h * 0.06f)
+    val maxAvailableHeight = (cityTopEdge - provinceBottomEdge) * 0.75f
+    val baseFontSize = (h * 0.30f).toSp()
+
+    val layout1 = textMeasurer.measure(firstPart, TextStyle(fontSize = baseFontSize, fontFamily = registrationFont))
+    val layout2 = textMeasurer.measure(secondPart, TextStyle(fontSize = baseFontSize, fontFamily = registrationFont))
+
+    val squareSize = layout1.size.height * 0.2f
+    val internalGap = w * 0.03f
+
+    val totalComponentWidth = layout1.size.width + squareSize + (internalGap * 2) + layout2.size.width
+    val maxAvailableWidth = availableContentWidth - (horizontalPadding * 2)
+
+    val finalScale = minOf(maxAvailableWidth / totalComponentWidth, maxAvailableHeight / layout1.size.height).coerceAtMost(1f)
+
+    val finalFontSize = (baseFontSize.value * finalScale).sp
+    val finalSquareSize = squareSize * finalScale
+    val finalInternalGap = internalGap * finalScale
+
+    val fLayout1 = textMeasurer.measure(firstPart, TextStyle(fontSize = finalFontSize, fontFamily = registrationFont, color = textColor))
+    val fLayout2 = textMeasurer.measure(secondPart, TextStyle(fontSize = finalFontSize, fontFamily = registrationFont, color = textColor))
+
+    val gapCenterY = provinceBottomEdge + ((cityTopEdge - provinceBottomEdge) / 2f)
+    val textY = gapCenterY - (fLayout1.size.height / 2f)
+
+    val finalTotalWidth = fLayout1.size.width + finalSquareSize + (finalInternalGap * 2) + fLayout2.size.width
+    val startX = contentLeftEdge + (availableContentWidth - finalTotalWidth) / 2f
+
+    // --- 3. DRAWING REGISTRATION ---
+    withTransform({
+        scale(1.0f, 1.3f, pivot = Offset(startX, textY + fLayout1.size.height / 2f))
+    }) {
+        drawText(fLayout1, topLeft = Offset(startX, textY + verticalShift))
+    }
+
+    val dotX = startX + fLayout1.size.width + finalInternalGap
+    val dotY = (textY + (fLayout1.size.height / 2f)) - (finalSquareSize / 2f) + verticalShift
+
+    drawRect(
+        color = textColor,
+        topLeft = Offset(dotX, dotY),
+        size = Size(finalSquareSize, finalSquareSize)
+    )
+
+    val secondPartX = dotX + finalSquareSize + finalInternalGap
+    withTransform({
+        scale(1.0f, 1.3f, pivot = Offset(secondPartX, textY + fLayout2.size.height / 2f))
+    }) {
+        drawText(fLayout2, topLeft = Offset(secondPartX, textY + verticalShift))
+    }
 }
