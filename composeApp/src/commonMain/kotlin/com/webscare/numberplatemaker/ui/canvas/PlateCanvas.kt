@@ -2204,11 +2204,9 @@ private fun DrawScope.drawAjkCarPlate(
 
     // --- 0. STRIP AREA CALCULATIONS (25% of Plate) ---
     val totalStripAreaWidth = w * 0.25f
-
-    // 1. Draw "ajk_strip_bg" (Vertically Full, Horizontally 20% of Plate)
-    val bgWidth = w * 0.20f
-    // Isay hum strip area ke right side par align kar rahe hain taake content se touch ho
+    val bgWidth = w * 0.05f
     val bgX = totalStripAreaWidth - bgWidth
+
 
     translate(left = bgX, top = 0f) {
         with(ajkStripBg) {
