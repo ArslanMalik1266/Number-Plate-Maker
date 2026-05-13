@@ -50,6 +50,7 @@ class PlateRepositoryImpl : PlateRepository {
             CityTextAlignment = TextAlignment.BOTTOM_CENTRE,
             provinceCodeAlignment = TextAlignment.NONE,
             RegistrationTextAlignment = TextAlignment.CENTRE,
+            logoColor = style.logoColor ?: 0xFF000000
 
         )
     }

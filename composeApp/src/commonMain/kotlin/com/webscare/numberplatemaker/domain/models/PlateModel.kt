@@ -28,6 +28,7 @@ data class PlateConfig(
     val side: PlateSide,
     val provinceName: String,
     val provinceCode : String,
+    val logoColor : Long,
     val cityName : String,
     val Strip : Boolean,
     val bgColor: Long,
