@@ -12,6 +12,9 @@ data class PlateUiState(
     val finalPlate: PlateModel? = null,
     val frontPlate: PlateModel? = null,
     val backPlate: PlateModel? = null,
+    val exporting: Boolean = false,
+    val exportSuccess: Boolean = false,
+    val exportError: String? = null,
     val loading : Boolean = true
 )
 
@@ -114,3 +117,4 @@ sealed class PlateStep {
     data object InputNumber : PlateStep()
     data object Preview : PlateStep()
 }
+

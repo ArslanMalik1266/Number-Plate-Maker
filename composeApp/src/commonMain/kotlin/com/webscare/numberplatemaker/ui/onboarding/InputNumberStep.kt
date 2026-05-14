@@ -65,7 +65,8 @@ fun InputNumberStep(
         OutlinedTextField(
             value = registrationNumber,
             // Senior Tip: Always force uppercase for plate numbers
-            onValueChange = { if (it.length <= 12) onNumberChange(it.uppercase()) },
+            onValueChange = {
+                if (it.length <= 12) onNumberChange(it.uppercase()) },
             label = { Text("Plate Number") },
             placeholder = { Text("e.g. LEA-1234") },
             modifier = Modifier.fillMaxWidth(),

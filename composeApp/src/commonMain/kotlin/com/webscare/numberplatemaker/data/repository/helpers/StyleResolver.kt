@@ -14,6 +14,7 @@ object StyleResolver {
         vehicle: VehicleType,
         side: PlateSide
     ): StyleConfig {
+        if (vehicle == VehicleType.DIPLOMATIC) return getDiplomaticStyle(vehicle, side)
         return when (province) {
             Province.PUNJAB -> getPunjabStyle(vehicle, side)
             Province.KPK -> getKpkStyle(vehicle, side)
@@ -36,8 +37,6 @@ object StyleResolver {
             VehicleType.GOVERNMENT ->
                 Triple(0xFF004B23L, 0xFFFFFFFFL, 0xFFFFFFFFL) // Green BG, White Text, White Logo
 
-            VehicleType.DIPLOMATIC ->
-                Triple(0xFFE33528L, 0xFFFFFFFFL, 0xFFFFFFFFL) // Red BG, White Text, White Logo
 
             VehicleType.RICKSHAW ->
                 Triple(0xFFFFD700L, 0xFF1A1A1AL, 0xFF1A1A1AL) // Yellow BG, Black Text, Black Logo
@@ -109,7 +108,6 @@ object StyleResolver {
         val (background, text) = when (vehicle) {
             VehicleType.COMMERCIAL -> 0xFFFFD700L to 0xFF1A1A1AL // Yellow background, Black text
             VehicleType.GOVERNMENT -> 0xFF004B23 to 0xFFFFFFFFL // Green background, White text
-            VehicleType.DIPLOMATIC -> 0xFFE33528 to 0xFFFFFFFFL // Red background, White text
             VehicleType.RICKSHAW -> 0xFFFFD700L to 0xFF1A1A1AL
             VehicleType.ELECTRIC_BIKE, VehicleType.ELECTRIC_CAR -> 0xFF0A4624 to 0xFFFFFFFFL
             else -> 0xFFFFFFFFL to 0xFF1A1A1AL // Default White background, Black text
@@ -174,7 +172,6 @@ object StyleResolver {
         val (background, text) = when (vehicle) {
             VehicleType.COMMERCIAL -> 0xFFFFD700L to 0xFF1A1A1AL // Yellow background, Black text
             VehicleType.GOVERNMENT -> 0xFF004B23 to 0xFFFFFFFFL // Green background, White text
-            VehicleType.DIPLOMATIC -> 0xFFE33528 to 0xFFFFFFFFL // Red background, White text
             VehicleType.RICKSHAW -> 0xFFFFD700L to 0xFF1A1A1AL
             VehicleType.ELECTRIC_BIKE, VehicleType.ELECTRIC_CAR -> 0xFF0A4624 to 0xFFFFFFFFL
             else -> 0xFFFFFFFFL to 0xFF1A1A1AL // Default White background, Black text
@@ -239,7 +236,6 @@ object StyleResolver {
         val (background, text) = when (vehicle) {
             VehicleType.COMMERCIAL -> 0xFFFFD700L to 0xFF1A1A1AL // Yellow background, Black text
             VehicleType.GOVERNMENT -> 0xFF004B23 to 0xFFFFFFFFL // Green background, White text
-            VehicleType.DIPLOMATIC -> 0xFFE33528 to 0xFFFFFFFFL // Red background, White text
             VehicleType.RICKSHAW -> 0xFFFFD700L to 0xFF1A1A1AL
             VehicleType.ELECTRIC_BIKE, VehicleType.ELECTRIC_CAR -> 0xFF0A4624 to 0xFFFFFFFFL
             else -> 0xFFFFFFFFL to 0xFF1A1A1AL // Default White background, Black text
@@ -296,7 +292,6 @@ object StyleResolver {
         val (background, text) = when (vehicle) {
             VehicleType.COMMERCIAL -> 0xFFFFD700L to 0xFF1A1A1AL // Yellow background, Black text
             VehicleType.GOVERNMENT -> 0xFF004B23 to 0xFFFFFFFFL // Green background, White text
-            VehicleType.DIPLOMATIC -> 0xFFE33528 to 0xFFFFFFFFL // Red background, White text
             VehicleType.RICKSHAW -> 0xFFFFD700L to 0xFF1A1A1AL
             VehicleType.ELECTRIC_BIKE, VehicleType.ELECTRIC_CAR -> 0xFF0A4624 to 0xFFFFFFFFL
             else -> 0xFFFFFFFFL to 0xFF1A1A1AL // Default White background, Black text
@@ -360,7 +355,6 @@ object StyleResolver {
         val (background, text) = when (vehicle) {
             VehicleType.COMMERCIAL -> 0xFFFFD700L to 0xFF1A1A1AL // Yellow background, Black text
             VehicleType.GOVERNMENT -> 0xFF004B23 to 0xFFFFFFFFL // Green background, White text
-            VehicleType.DIPLOMATIC -> 0xFFE33528 to 0xFFFFFFFFL // Red background, White text
             VehicleType.RICKSHAW -> 0xFFFFD700L to 0xFF1A1A1AL
             VehicleType.ELECTRIC_BIKE, VehicleType.ELECTRIC_CAR -> 0xFF0A4624 to 0xFFFFFFFFL
             else -> 0xFFFFFFFFL to 0xFF1A1A1AL // Default White background, Black text
@@ -418,7 +412,6 @@ object StyleResolver {
         val (background, text) = when (vehicle) {
             VehicleType.COMMERCIAL -> 0xFFFFD700L to 0xFF1A1A1AL // Yellow background, Black text
             VehicleType.GOVERNMENT -> 0xFF004B23 to 0xFFFFFFFFL // Green background, White text
-            VehicleType.DIPLOMATIC -> 0xFFE33528 to 0xFFFFFFFFL // Red background, White text
             VehicleType.RICKSHAW -> 0xFFFFD700L to 0xFF1A1A1AL
             VehicleType.ELECTRIC_BIKE, VehicleType.ELECTRIC_CAR -> 0xFF0A4624 to 0xFFFFFFFFL
             else -> 0xFFFFFFFFL to 0xFF1A1A1AL // Default White background, Black text
@@ -451,7 +444,7 @@ object StyleResolver {
                         stripOrientation = StripOrientation.NONE,
                         logoAlignment = LogoAlignment.AJK_logo,
                         provinceName = "Islamabad",
-                        cityName = "ICT-ISLAMABAD",
+                        cityName = "ICT-ISLD",
                         cityNamelignment = TextAlignment.BOTTOM_CENTRE,
                         regAlignment = TextAlignment.CENTRE,
                         provinceAlignment = TextAlignment.TOP_CENTRE,
@@ -478,6 +471,21 @@ object StyleResolver {
         }
     }
 
+    private fun getDiplomaticStyle(vehicle: VehicleType, side: PlateSide): StyleConfig {
+        return StyleConfig(
+            bgColor = 0xFFE33528L, // Red
+            textColor = 0xFFFFFFFFL, // White
+            stripColor = 0,
+            hasStrip = false,
+            cityName = "ICT-ISLAMABAD",
+            cityNamelignment = TextAlignment.TOP_CENTRE, // Top pr text
+            stripOrientation = StripOrientation.NONE,
+            logoAlignment = LogoAlignment.NONE,
+            provinceName = "DIPLOMATIC",
+            regAlignment = TextAlignment.CENTRE, // Number bilkul center mein
+            provinceAlignment = TextAlignment.NONE,
+        )
+    }
 
     // Default Fallback
     private fun getDefaultStyle() = StyleConfig(
