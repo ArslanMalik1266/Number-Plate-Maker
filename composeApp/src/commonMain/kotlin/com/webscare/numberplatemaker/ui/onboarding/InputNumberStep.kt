@@ -2,24 +2,44 @@ package com.webscare.numberplatemaker.ui.onboarding
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.webscare.numberplatemaker.ui.PlateViewModel
 
 @Composable
 fun InputNumberStep(
     registrationNumber: String,
     onNumberChange: (String) -> Unit,
     onGenerate: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    viewModel: PlateViewModel
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+    val config = uiState.plateInputConfig
+
+    val textFieldValue = TextFieldValue(
+        text = registrationNumber,
+        selection = TextRange(registrationNumber.length) // Hamesha text ke end par cursor rakho
+    )
+    val shouldShowNumberKeyboard = registrationNumber.endsWith(" ") ||
+            registrationNumber.any { it.isDigit() }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -63,10 +83,18 @@ fun InputNumberStep(
 
         // --- 3. Input Field ---
         OutlinedTextField(
-            value = registrationNumber,
-            // Senior Tip: Always force uppercase for plate numbers
-            onValueChange = {
-                if (it.length <= 12) onNumberChange(it.uppercase()) },
+            value = textFieldValue,
+            onValueChange = { newValue ->
+                // Sirf text ViewModel ko bhejo, formatting wahan se hogi
+                onNumberChange(newValue.text)
+            },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = if (shouldShowNumberKeyboard) {
+                    KeyboardType.Number
+                } else {
+                    KeyboardType.Text
+                },  capitalization = KeyboardCapitalization.Characters
+            ),
             label = { Text("Plate Number") },
             placeholder = { Text("e.g. LEA-1234") },
             modifier = Modifier.fillMaxWidth(),
@@ -84,7 +112,7 @@ fun InputNumberStep(
         )
 
         Text(
-            text = "Format: AAA-000 or LEA-24-1234",
+            text = "Format: ${uiState.formatHint.ifEmpty { "ABC 1234" }}",
             modifier = Modifier.padding(top = 12.dp).fillMaxWidth(),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),

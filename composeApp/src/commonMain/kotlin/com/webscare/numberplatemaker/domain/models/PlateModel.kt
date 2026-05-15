@@ -10,8 +10,12 @@ data class PlateUiState(
     val selectedProvince: Province? = null,
     val registrationNumber: String = "",
     val finalPlate: PlateModel? = null,
+    val letterInput: String = "",
+    val numberInput: String = "",
+    val formatHint: String = "",
     val frontPlate: PlateModel? = null,
     val backPlate: PlateModel? = null,
+    val plateInputConfig: PlateInputConfig? = null,
     val exporting: Boolean = false,
     val exportSuccess: Boolean = false,
     val exportError: String? = null,
@@ -118,3 +122,10 @@ sealed class PlateStep {
     data object Preview : PlateStep()
 }
 
+data class PlateInputConfig(
+    val minLetterCount: Int,
+    val maxLetterCount: Int,
+    val minNumberCount: Int,
+    val maxNumberCount: Int,
+    val formatHint: String
+)

@@ -49,7 +49,8 @@ import kotlin.math.ceil
 
 @Composable
 fun PlateCanvas(
-    config: PlateConfig, modifier: Modifier = Modifier
+    config: PlateConfig, modifier: Modifier = Modifier,
+    isExporting: Boolean = false
 ) {
     val textMeasurer = rememberTextMeasurer()
     val feFont = PlateTypography.getPlateFont()
@@ -76,11 +77,13 @@ fun PlateCanvas(
         val density = androidx.compose.ui.platform.LocalDensity
         val strokeWidth = with(density) { 4.dp.toPx() }
         val fixedCornerRadius = with(density) { 16.dp.toPx() }
-        drawRoundRect(
-            color = Color(config.bgColor),
-            size = size,
-            cornerRadius = CornerRadius(fixedCornerRadius, fixedCornerRadius)
-        )
+        if (!isExporting) {
+            drawRoundRect(
+                color = Color(config.bgColor),
+                size = size,
+                cornerRadius = CornerRadius(fixedCornerRadius, fixedCornerRadius)
+            )
+        }
         val padding = with(density) { 2.dp.toPx() }
 
         drawRoundRect(
@@ -1939,7 +1942,7 @@ private fun DrawScope.drawSindhBikeFront(
     val finalLayout2 = textMeasurer.measure(secondPart, regStyle)
 
     // --- 5. POSITIONING & DRAWING ---
-    val textY = (h / 2f) - (finalLayout1.size.height / 2f)
+    val textY = (h / 2f) - (finalLayout1.size.height / 2f) - (h * 0.03f)
     val logoY = textY + (finalLayout1.size.height / 2f) - (finalLogoHeight / 2f)
 
     val finalTotalWidth =
@@ -3498,8 +3501,6 @@ private fun DrawScope.drawDiplomaticPlate(
     val textColor = Color(config.textColor)
 
 
-
-    // --- 2. Registration Number (Big & Centered) ---
     val parts = config.registrationNumber.trim().split(" ")
     val fullText = parts.joinToString("  ") // Space barha di taake clear nazar aaye
 

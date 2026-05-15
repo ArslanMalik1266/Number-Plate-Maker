@@ -55,15 +55,10 @@ fun OnboardingScreen() {
                 is PlateStep.InputNumber -> {
                     InputNumberStep(
                         registrationNumber = uiState.registrationNumber,
-                        // Pass validation states from ViewModel
-                        onNumberChange = { newNumber ->
-                            viewModel.onRegistrationNumberChanged(newNumber)
-                        },
+                        onNumberChange = { viewModel.onRegistrationNumberChanged(it) },
                         onBack = { viewModel.navigateBack() },
-                        onGenerate = {
-                            // Generating for both sides is handled inside ViewModel
-                            viewModel.generatePlatePreview(uiState.registrationNumber)
-                        }
+                        onGenerate = { viewModel.generatePlatePreview(uiState.registrationNumber) },
+                        viewModel = viewModel
                     )
                 }
 

@@ -7,5 +7,5 @@ interface PlateExportRepository {
         frontImageData: ByteArray,
         backImageData: ByteArray,
         format: ExportFormat
-    ): Result<String> // path return karega
+    ): Result<String>
 }

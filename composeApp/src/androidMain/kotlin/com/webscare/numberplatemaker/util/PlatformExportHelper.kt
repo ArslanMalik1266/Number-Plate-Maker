@@ -3,13 +3,15 @@ package com.webscare.numberplatemaker.util
 import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.pdf.PdfDocument
-import android.os.Build
+import android.os.Environment
 import android.provider.MediaStore
-import androidx.annotation.RequiresApi
 import com.webscare.numberplatemaker.domain.models.ExportFormat
-import kotlin.use
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.pdf.PdfDocument
+import android.graphics.Paint
 
 actual class PlatformExportHelper(private val context: Context) {
 
@@ -17,68 +19,96 @@ actual class PlatformExportHelper(private val context: Context) {
         frontData: ByteArray,
         backData: ByteArray,
         format: ExportFormat
-    ): String {
-        val front = BitmapFactory.decodeByteArray(frontData, 0, frontData.size)
-        val back = BitmapFactory.decodeByteArray(backData, 0, backData.size)
+    ): String = withContext(Dispatchers.IO) {
+        try {
+            val timestamp = System.currentTimeMillis()
 
-        val combined = Bitmap.createBitmap(
-            maxOf(front.width, back.width),
-            front.height + back.height + 40,
-            Bitmap.Config.ARGB_8888
-        )
-        android.graphics.Canvas(combined).apply {
-            drawColor(android.graphics.Color.WHITE)
-            drawBitmap(front, 0f, 0f, null)
-            drawBitmap(back, 0f, (front.height + 40).toFloat(), null)
-        }
+            // 1. Front Plate Save Karein
+            val frontName = "Plate_Front_$timestamp"
+            saveToGallery(frontData, frontName, format)
 
-        val (ext, mime, compressFormat) = when (format) {
-            ExportFormat.PNG -> Triple("png", "image/png", Bitmap.CompressFormat.PNG)
-            else -> Triple("jpg", "image/jpeg", Bitmap.CompressFormat.JPEG)
-        }
+            // 2. Back Plate Save Karein (Dono alag files hongi)
+            val backName = "Plate_Back_$timestamp"
+            saveToGallery(backData, backName, format)
 
-        val filename = "plate_${System.currentTimeMillis()}.$ext"
-        val contentValues = ContentValues().apply {
-            put(MediaStore.Images.Media.DISPLAY_NAME, filename)
-            put(MediaStore.Images.Media.MIME_TYPE, mime)
-            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/NumberPlates")
+            "Success: Both plates saved to Gallery"
+        } catch (e: Exception) {
+            "Error: ${e.message}"
         }
-        val uri = context.contentResolver.insert(
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues
-        )!!
-        context.contentResolver.openOutputStream(uri)!!.use {
-            combined.compress(compressFormat, 100, it)
-        }
-        return uri.toString()
     }
 
-    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun saveToGallery(data: ByteArray, fileName: String, format: ExportFormat) {
+        val extension = if (format == ExportFormat.PNG) "png" else "jpg"
+        val mimeType = if (format == ExportFormat.PNG) "image/png" else "image/jpeg"
+
+        val contentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, "$fileName.$extension")
+            put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
+            put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/NumberPlateMaker")
+        }
+
+        val resolver = context.contentResolver
+        val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+
+        uri?.let {
+            resolver.openOutputStream(it)?.use { stream ->
+                stream.write(data)
+            }
+        }
+    }
+
     actual suspend fun savePdf(
         frontData: ByteArray,
         backData: ByteArray
-    ): String {
-        val front = BitmapFactory.decodeByteArray(frontData, 0, frontData.size)
-        val back = BitmapFactory.decodeByteArray(backData, 0, backData.size)
+    ): String = withContext(Dispatchers.IO) {
+        try {
+            val timestamp = System.currentTimeMillis()
+            val fileName = "Plates_$timestamp.pdf"
 
-        val filename = "plate_${System.currentTimeMillis()}.pdf"
-        val contentValues = ContentValues().apply {
-            put(MediaStore.Files.FileColumns.DISPLAY_NAME, filename)
-            put(MediaStore.Files.FileColumns.MIME_TYPE, "application/pdf")
-            put(MediaStore.Files.FileColumns.RELATIVE_PATH, "Documents/NumberPlates")
+            // 1. PdfDocument Create karein
+            val pdfDocument = PdfDocument()
+            val paint = Paint()
+
+            // Byte array ko Bitmaps mein convert karein
+            val frontBitmap = BitmapFactory.decodeByteArray(frontData, 0, frontData.size)
+            val backBitmap = BitmapFactory.decodeByteArray(backData, 0, backData.size)
+
+            // 2. Front Plate Page (Page 1)
+            // Hum Bitmap ke size ke mutabiq page create karenge
+            val frontPageInfo = PdfDocument.PageInfo.Builder(frontBitmap.width, frontBitmap.height, 1).create()
+            val frontPage = pdfDocument.startPage(frontPageInfo)
+            frontPage.canvas.drawBitmap(frontBitmap, 0f, 0f, paint)
+            pdfDocument.finishPage(frontPage)
+
+            // 3. Back Plate Page (Page 2)
+            val backPageInfo = PdfDocument.PageInfo.Builder(backBitmap.width, backBitmap.height, 2).create()
+            val backPage = pdfDocument.startPage(backPageInfo)
+            backPage.canvas.drawBitmap(backBitmap, 0f, 0f, paint)
+            pdfDocument.finishPage(backPage)
+
+            // 4. MediaStore ke zariye save karein (Scoped Storage)
+            val contentValues = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/NumberPlateMaker")
+            }
+
+            val resolver = context.contentResolver
+            val uri = resolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
+
+            uri?.let {
+                resolver.openOutputStream(it)?.use { outputStream ->
+                    pdfDocument.writeTo(outputStream)
+                }
+            }
+
+            pdfDocument.close()
+            frontBitmap.recycle()
+            backBitmap.recycle()
+
+            "Success: PDF saved to Documents"
+        } catch (e: Exception) {
+            "Error: ${e.message}"
         }
-        val uri = context.contentResolver.insert(
-            MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues
-        )!!
-        val document = PdfDocument()
-        listOf(front to 1, back to 2).forEach { (bitmap, pageNum) ->
-            val page = document.startPage(
-                PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, pageNum).create()
-            )
-            page.canvas.drawBitmap(bitmap, 0f, 0f, null)
-            document.finishPage(page)
-        }
-        context.contentResolver.openOutputStream(uri)!!.use { document.writeTo(it) }
-        document.close()
-        return uri.toString()
     }
 }

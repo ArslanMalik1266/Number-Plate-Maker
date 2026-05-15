@@ -13,9 +13,15 @@ class PlateExportRepositoryImpl(
         backImageData: ByteArray,
         format: ExportFormat
     ): Result<String> = runCatching {
-        when (format) {
-            ExportFormat.PDF -> helper.savePdf(frontImageData, backImageData)
-            else -> helper.saveImage(frontImageData, backImageData, format)
+        if (format == ExportFormat.PDF) {
+            // PDF logic: Dono images ek hi document mein
+            helper.savePdf(frontImageData, backImageData)
+        } else {
+            helper.saveImage(
+                frontData = frontImageData,
+                backData = backImageData,
+                format = format
+            )
         }
     }
 }

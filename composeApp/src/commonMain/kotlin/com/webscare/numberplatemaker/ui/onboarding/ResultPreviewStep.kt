@@ -13,7 +13,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -26,6 +28,7 @@ import com.webscare.numberplatemaker.domain.models.PlateModel
 import com.webscare.numberplatemaker.ui.PlateViewModel
 import com.webscare.numberplatemaker.ui.canvas.PlateCanvas
 import com.webscare.numberplatemaker.util.toByteArray
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -40,6 +43,9 @@ fun ResultPreviewStep(
     val sheetState = rememberModalBottomSheetState()
     var showExportSheet by remember { mutableStateOf(false) }
 
+    // ✅ SIRF YE ADD KIYA
+    val snackbarHostState = remember { SnackbarHostState() }
+
     // Density context for high-quality scaling
     val currentDensity = LocalDensity.current
 
@@ -47,99 +53,138 @@ fun ResultPreviewStep(
     val frontLayer = rememberGraphicsLayer()
     val backLayer = rememberGraphicsLayer()
 
+    // ✅ SIRF SCAFFOLD ADD KIYA BAAKI SAB SAME
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(24.dp))
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 16.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // --- HEADER ---
-        Text(
-            text = "Final Previews",
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.ExtraBold,
-                letterSpacing = (-0.5).sp
+            // --- HEADER ---
+            Text(
+                text = "Final Previews",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = (-0.5).sp
+                )
             )
-        )
-        Text(
-            text = "Ultra HD (4K) Export Enabled",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        if (plate != null) {
-            // --- FRONT PLATE ---
-            PreviewLabel("FRONT PLATE")
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(2.1f)
-                    .clip(RoundedCornerShape(12.dp))
-                    .drawWithContent {
-                        frontLayer.record {
-                            this@drawWithContent.drawContent()
-                        }
-                        drawLayer(frontLayer)
-                    }
-            ) {
-                uiState.frontPlate?.let { PlateCanvas(it.config, Modifier.fillMaxSize()) }
-            }
+            Text(
+                text = "Ultra HD (4K) Export Enabled",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- REAR PLATE ---
-            PreviewLabel("REAR PLATE")
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(2.1f)
-                    .clip(RoundedCornerShape(12.dp))
-                    .drawWithContent {
-                        backLayer.record {
-                            this@drawWithContent.drawContent()
+            if (plate != null) {
+                // --- FRONT PLATE ---
+                PreviewLabel("FRONT PLATE")
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(plate.config.bgColor))
+                        .drawWithContent {
+                            // 1. Target (2K) Calculation
+                            val targetWidth = 2048f
+                            val scaleFactor = targetWidth / size.width
+                            val targetHeight = size.height * scaleFactor
+
+                            // 2. High-Res Recording (Invisible to user)
+                            frontLayer.record(
+                                size = androidx.compose.ui.unit.IntSize(targetWidth.toInt(), targetHeight.toInt())
+                            ) {
+                                withTransform({
+                                    scale(scaleFactor, scaleFactor, pivot = Offset.Zero)
+                                }) {
+                                    // Ye high resolution mein record ho raha hai
+                                    this@drawWithContent.drawContent()
+                                }
+                            }
+
+                            // 3. Normal Preview (Visible to user)
+                            // Hum scaled layer draw nahi kar rahe, balkay seedha content draw kar rahe hain
+                            // Is se preview waisa hi dikhega jaisa mobile screen par fit hona chahiye
+                            drawContent()
                         }
-                        drawLayer(backLayer)
+                ) {
+                    uiState.frontPlate?.let { PlateCanvas(it.config, Modifier.fillMaxSize()) }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // --- REAR PLATE ---
+                PreviewLabel("REAR PLATE")
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(plate.config.bgColor))
+                        .drawWithContent {
+                            // 1. Target Resolution (2K)
+                            val targetWidth = 2048f
+                            val scaleFactor = targetWidth / size.width
+                            val targetHeight = size.height * scaleFactor
+
+                            // 2. Background Recording (High Res)
+                            // Is block ke andar hum scaling apply karenge taake bitmap clear bane
+                            backLayer.record(
+                                size = androidx.compose.ui.unit.IntSize(targetWidth.toInt(), targetHeight.toInt())
+                            ) {
+                                withTransform({
+                                    scale(scaleFactor, scaleFactor, pivot = Offset.Zero)
+                                }) {
+                                    this@drawWithContent.drawContent()
+                                }
+                            }
+
+                            // 3. Screen Preview (Normal)
+                            // Yahan drawLayer call karne ke bajaye seedha drawContent() use karein
+                            // Is se preview waisa hi dikhega jaisa screen par hona chahiye (No Zoom)
+                            drawContent()
+                        }
+                ) {
+                    uiState.backPlate?.let { PlateCanvas(it.config, Modifier.fillMaxSize()) }
+                }
+
+                Spacer(modifier = Modifier.height(28.dp))
+                DetailBox(plate)
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // --- ACTIONS ---
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onReset,
+                    modifier = Modifier.weight(1f).height(50.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = !uiState.exporting
+                ) {
+                    Text("Reset", fontSize = 14.sp)
+                }
+                Button(
+                    onClick = { showExportSheet = true },
+                    modifier = Modifier.weight(1f).height(50.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = !uiState.exporting
+                ) {
+                    if (uiState.exporting) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = Color.White)
+                    } else {
+                        Text("Download HD", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     }
-            ) {
-                uiState.backPlate?.let { PlateCanvas(it.config, Modifier.fillMaxSize()) }
-            }
-
-            Spacer(modifier = Modifier.height(28.dp))
-            DetailBox(plate)
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // --- ACTIONS ---
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            OutlinedButton(
-                onClick = onReset,
-                modifier = Modifier.weight(1f).height(50.dp),
-                shape = RoundedCornerShape(12.dp),
-                enabled = !uiState.exporting
-            ) {
-                Text("Reset", fontSize = 14.sp)
-            }
-            Button(
-                onClick = { showExportSheet = true },
-                modifier = Modifier.weight(1f).height(50.dp),
-                shape = RoundedCornerShape(12.dp),
-                enabled = !uiState.exporting
-            ) {
-                if (uiState.exporting) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = Color.White)
-                } else {
-                    Text("Download HD", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -156,16 +201,42 @@ fun ResultPreviewStep(
             ExportOptionsList { format ->
                 showExportSheet = false
                 scope.launch {
-                    val exportDensity = androidx.compose.ui.unit.Density(
-                        density = currentDensity.density * 3f,
-                        fontScale = currentDensity.fontScale
-                    )
+                    // High resolution factor (6f = 4K quality approx)
+                    val scaleFactor = 6f
 
+                    delay(300)
 
-                    val frontBytes = frontLayer.toImageBitmap().toByteArray()
-                    val backBytes = backLayer.toImageBitmap().toByteArray()
+                    try {
+                        // Note: toImageBitmap() density parameter nahi leta
+                        // Isliye hum seedha call karenge
+                        val frontBitmap = frontLayer.toImageBitmap()
+                        val backBitmap = backLayer.toImageBitmap()
 
-                    viewModel.exportPlate(frontBytes, backBytes, format)
+                        // Transparency conversion with your updated function
+                        val frontBytes = frontBitmap.toByteArray(format)
+                        val backBytes = backBitmap.toByteArray(format)
+
+                        viewModel.exportPlate(frontBytes, backBytes, format)
+
+                        // ✅ YE ADD KIYA - FORMAT-SPECIFIC MESSAGES
+                        val message = when (format) {
+                            ExportFormat.PNG -> "✓ PNG images saved to Downloads folder!"
+                            ExportFormat.JPEG -> "✓ JPEG images saved to Gallery!"
+                            ExportFormat.PDF -> "✓ PDF file saved to Gallery!"
+                        }
+
+                        snackbarHostState.showSnackbar(
+                            message = message,
+                            duration = SnackbarDuration.Short
+                        )
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        // ✅ ERROR MESSAGE
+                        snackbarHostState.showSnackbar(
+                            message = "Failed to save. Please try again.",
+                            duration = SnackbarDuration.Short
+                        )
+                    }
                 }
             }
         }
