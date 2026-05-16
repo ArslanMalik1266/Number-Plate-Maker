@@ -1,11 +1,13 @@
 package com.webscare.numberplatemaker.ui.onboarding
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,12 +23,14 @@ import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.webscare.numberplatemaker.domain.models.ExportFormat
 import com.webscare.numberplatemaker.domain.models.PlateModel
 import com.webscare.numberplatemaker.ui.PlateViewModel
 import com.webscare.numberplatemaker.ui.canvas.PlateCanvas
+import com.webscare.numberplatemaker.util.addPressEffect
 import com.webscare.numberplatemaker.util.toByteArray
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -43,46 +47,70 @@ fun ResultPreviewStep(
     val sheetState = rememberModalBottomSheetState()
     var showExportSheet by remember { mutableStateOf(false) }
 
-    // ✅ SIRF YE ADD KIYA
     val snackbarHostState = remember { SnackbarHostState() }
-
-    // Density context for high-quality scaling
     val currentDensity = LocalDensity.current
 
-    // Layers for capturing only the Canvas content
     val frontLayer = rememberGraphicsLayer()
     val backLayer = rememberGraphicsLayer()
 
-    // ✅ SIRF SCAFFOLD ADD KIYA BAAKI SAB SAME
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = Color(0xFFF8F6F1) // ✅ Screen background matched perfectly
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 24.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
 
-            // --- HEADER ---
+            // --- 1. Top Navigation Row ---
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start
+            ) {
+                IconButton(
+                    onClick = onReset, // Custom back trigger to step reset
+                    colors = IconButtonDefaults.iconButtonColors(contentColor = Color(0xFF1A1A1A))
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                        contentDescription = "Back",
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // --- 2. Typography Header Block ---
             Text(
                 text = "Final Previews",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = (-0.5).sp
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    fontWeight = FontWeight.Black,
+                    fontSize = 30.sp,
+                    letterSpacing = (-0.5).sp,
+                    color = Color(0xFF1A1A1A)
                 )
             )
+
             Text(
                 text = "Ultra HD (4K) Export Enabled",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = Color(0xFFD4A843), // Elegant gold accent
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.5.sp
+                ),
+                modifier = Modifier.padding(top = 4.dp)
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             if (plate != null) {
                 // --- FRONT PLATE ---
@@ -90,52 +118,44 @@ fun ResultPreviewStep(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .aspectRatio(2.1f) // Standard aspect ratio placeholder for cleaner alignment
                         .clip(RoundedCornerShape(16.dp))
                         .background(Color(plate.config.bgColor))
                         .drawWithContent {
-                            // 1. Target (2K) Calculation
                             val targetWidth = 2048f
                             val scaleFactor = targetWidth / size.width
                             val targetHeight = size.height * scaleFactor
 
-                            // 2. High-Res Recording (Invisible to user)
                             frontLayer.record(
                                 size = androidx.compose.ui.unit.IntSize(targetWidth.toInt(), targetHeight.toInt())
                             ) {
                                 withTransform({
                                     scale(scaleFactor, scaleFactor, pivot = Offset.Zero)
                                 }) {
-                                    // Ye high resolution mein record ho raha hai
                                     this@drawWithContent.drawContent()
                                 }
                             }
-
-                            // 3. Normal Preview (Visible to user)
-                            // Hum scaled layer draw nahi kar rahe, balkay seedha content draw kar rahe hain
-                            // Is se preview waisa hi dikhega jaisa mobile screen par fit hona chahiye
                             drawContent()
                         }
                 ) {
                     uiState.frontPlate?.let { PlateCanvas(it.config, Modifier.fillMaxSize()) }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(28.dp))
 
                 // --- REAR PLATE ---
-                PreviewLabel("REAR PLATE")
+                PreviewLabel("BACK PLATE")
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .aspectRatio(2.1f)
                         .clip(RoundedCornerShape(16.dp))
                         .background(Color(plate.config.bgColor))
                         .drawWithContent {
-                            // 1. Target Resolution (2K)
                             val targetWidth = 2048f
                             val scaleFactor = targetWidth / size.width
                             val targetHeight = size.height * scaleFactor
 
-                            // 2. Background Recording (High Res)
-                            // Is block ke andar hum scaling apply karenge taake bitmap clear bane
                             backLayer.record(
                                 size = androidx.compose.ui.unit.IntSize(targetWidth.toInt(), targetHeight.toInt())
                             ) {
@@ -145,45 +165,58 @@ fun ResultPreviewStep(
                                     this@drawWithContent.drawContent()
                                 }
                             }
-
-                            // 3. Screen Preview (Normal)
-                            // Yahan drawLayer call karne ke bajaye seedha drawContent() use karein
-                            // Is se preview waisa hi dikhega jaisa screen par hona chahiye (No Zoom)
                             drawContent()
                         }
                 ) {
                     uiState.backPlate?.let { PlateCanvas(it.config, Modifier.fillMaxSize()) }
                 }
 
-                Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.height(32.dp))
                 DetailBox(plate)
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(40.dp))
 
             // --- ACTIONS ---
             Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 OutlinedButton(
                     onClick = onReset,
-                    modifier = Modifier.weight(1f).height(50.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    enabled = !uiState.exporting
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    enabled = !uiState.exporting,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Color(0xFF1A1A1A)
+                    ),
+                    border = BorderStroke(1.dp, Color(0xFFE5E2DA))
                 ) {
-                    Text("Reset", fontSize = 14.sp)
+                    Text("Reset", fontSize = 15.sp, fontWeight = FontWeight.Bold)
                 }
+
                 Button(
                     onClick = { showExportSheet = true },
-                    modifier = Modifier.weight(1f).height(50.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    enabled = !uiState.exporting
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    enabled = !uiState.exporting,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF1A1A1A),
+                        contentColor = Color.White,
+                        disabledContainerColor = Color(0xFFE5E2DA),
+                        disabledContentColor = Color(0xFFB5B5B0)
+                    )
                 ) {
                     if (uiState.exporting) {
                         CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = Color.White)
                     } else {
-                        Text("Download HD", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Text("Download HD", fontSize = 15.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -195,47 +228,32 @@ fun ResultPreviewStep(
         ModalBottomSheet(
             onDismissRequest = { showExportSheet = false },
             sheetState = sheetState,
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = Color.White, // Match card background theme
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
         ) {
             ExportOptionsList { format ->
                 showExportSheet = false
                 scope.launch {
-                    // High resolution factor (6f = 4K quality approx)
-                    val scaleFactor = 6f
-
                     delay(300)
-
                     try {
-                        // Note: toImageBitmap() density parameter nahi leta
-                        // Isliye hum seedha call karenge
                         val frontBitmap = frontLayer.toImageBitmap()
                         val backBitmap = backLayer.toImageBitmap()
 
-                        // Transparency conversion with your updated function
                         val frontBytes = frontBitmap.toByteArray(format)
                         val backBytes = backBitmap.toByteArray(format)
 
                         viewModel.exportPlate(frontBytes, backBytes, format)
 
-                        // ✅ YE ADD KIYA - FORMAT-SPECIFIC MESSAGES
                         val message = when (format) {
-                            ExportFormat.PNG -> "✓ PNG images saved to Downloads folder!"
-                            ExportFormat.JPEG -> "✓ JPEG images saved to Gallery!"
-                            ExportFormat.PDF -> "✓ PDF file saved to Gallery!"
+                            ExportFormat.PNG -> "PNG images saved to Gallery!"
+                            ExportFormat.JPEG -> "JPEG images saved to Gallery!"
+                            ExportFormat.PDF -> "PDF file saved to Downloads folder!"
                         }
 
-                        snackbarHostState.showSnackbar(
-                            message = message,
-                            duration = SnackbarDuration.Short
-                        )
+                        snackbarHostState.showSnackbar(message = message, duration = SnackbarDuration.Short)
                     } catch (e: Exception) {
                         e.printStackTrace()
-                        // ✅ ERROR MESSAGE
-                        snackbarHostState.showSnackbar(
-                            message = "Failed to save. Please try again.",
-                            duration = SnackbarDuration.Short
-                        )
+                        snackbarHostState.showSnackbar(message = "Failed to save. Please try again.", duration = SnackbarDuration.Short)
                     }
                 }
             }
@@ -250,8 +268,15 @@ private fun ExportOptionsList(onFormatSelected: (ExportFormat) -> Unit) {
             .fillMaxWidth()
             .padding(start = 24.dp, end = 24.dp, bottom = 48.dp, top = 8.dp)
     ) {
-        Text("Select Ultra HD Format", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Select Ultra HD Format",
+            style = MaterialTheme.typography.titleMedium.copy(
+                color = Color(0xFF1A1A1A),
+                fontWeight = FontWeight.Black,
+                fontSize = 18.sp
+            )
+        )
+        Spacer(modifier = Modifier.height(20.dp))
 
         ExportFormatItem("Save as PNG (Lossless)", "Perfect for sharp edges & text", Icons.Outlined.CheckCircle) {
             onFormatSelected(ExportFormat.PNG)
@@ -270,17 +295,20 @@ private fun ExportFormatItem(title: String, subtitle: String, icon: ImageVector,
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(12.dp),
-        color = Color.Transparent
+        color = Color.Transparent,
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 14.dp, horizontal = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+            Icon(icon, null, tint = Color(0xFF1A1A1A), modifier = Modifier.size(24.dp))
             Spacer(modifier = Modifier.width(16.dp))
             Column {
-                Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color(0xFF1A1A1A))
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF888880))
             }
         }
     }
@@ -290,9 +318,15 @@ private fun ExportFormatItem(title: String, subtitle: String, icon: ImageVector,
 private fun PreviewLabel(label: String) {
     Text(
         text = label,
-        modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp, start = 4.dp),
-        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, letterSpacing = 1.sp),
-        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp, start = 4.dp),
+        style = MaterialTheme.typography.labelSmall.copy(
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.5.sp,
+            fontSize = 11.sp
+        ),
+        color = Color(0xFF888880)
     )
 }
 
@@ -301,12 +335,20 @@ private fun DetailBox(plate: PlateModel) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, Color(0xFFE5E2DA)) // Blend beautifully with the cream background
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("Vehicle Info", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-            Spacer(modifier = Modifier.height(12.dp))
+        Column(modifier = Modifier.padding(20.dp)) {
+            Text(
+                "Vehicle Info",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1A1A1A)
+            )
+            Spacer(modifier = Modifier.height(14.dp))
             DetailItem(Icons.Outlined.LocationOn, "Province", plate.config.provinceName)
+            val formattedVehicleType = plate.config.vehicleType.name.replace("_", " ").uppercase()
+            DetailItem(Icons.Outlined.Build, "Vehicle Type", formattedVehicleType)
             DetailItem(Icons.Outlined.DirectionsCar, "Reg Number", plate.config.registrationNumber.uppercase())
         }
     }
@@ -314,10 +356,10 @@ private fun DetailBox(plate: PlateModel) {
 
 @Composable
 private fun DetailItem(icon: ImageVector, label: String, value: String) {
-    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-        Text(value, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold))
+    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, null, modifier = Modifier.size(18.dp), tint = Color(0xFF888880))
+        Spacer(modifier = Modifier.width(10.dp))
+        Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF888880))
+        Text(value, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, color = Color(0xFF1A1A1A)))
     }
 }

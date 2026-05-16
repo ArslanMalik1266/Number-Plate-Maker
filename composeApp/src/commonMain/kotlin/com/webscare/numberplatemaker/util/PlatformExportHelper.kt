@@ -6,11 +6,13 @@ expect class PlatformExportHelper {
     suspend fun saveImage(
         frontData: ByteArray,
         backData: ByteArray,
-        format: ExportFormat
+        format: ExportFormat,
     ): String
 
     suspend fun savePdf(
         frontData: ByteArray,
-        backData: ByteArray
+        backData: ByteArray,
+        registrationNumber: String,
+        vehicleType: String
     ): String
 }

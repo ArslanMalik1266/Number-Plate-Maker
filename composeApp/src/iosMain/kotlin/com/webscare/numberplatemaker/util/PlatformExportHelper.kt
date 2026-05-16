@@ -69,12 +69,21 @@ actual class PlatformExportHelper {
 
     actual suspend fun savePdf(
         frontData: ByteArray,
-        backData: ByteArray
+        backData: ByteArray,
+        registrationNumber: String,
+        vehicleType: String
     ): String {
         val frontImage = UIImage.imageWithData(frontData.toNSData())!!
         val backImage = UIImage.imageWithData(backData.toNSData())!!
 
-        val path = NSTemporaryDirectory() + "plate_${NSDate().timeIntervalSince1970}.pdf"
+        // --- PROFESSIONAL NAMING LOGIC ---
+        val cleanRegNo = registrationNumber.trim().uppercase().replace("\\s+".toRegex(), "_")
+        val cleanVehicleType = vehicleType.trim().uppercase()
+        val timestamp = (NSDate().timeIntervalSince1970 * 1000).toLong()
+
+        // Example: Plate_LEA_1234_PRIVATE_CAR_1715843459.pdf
+        val fileName = "Plate_${cleanRegNo}_${cleanVehicleType}_$timestamp.pdf"
+        val path = NSTemporaryDirectory() + fileName
         UIGraphicsBeginPDFContextToFile(path, cValue<CGRect>(), null)
 
         listOf(frontImage, backImage).forEach { image ->

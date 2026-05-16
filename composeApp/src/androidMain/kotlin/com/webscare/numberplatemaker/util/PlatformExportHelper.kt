@@ -59,11 +59,17 @@ actual class PlatformExportHelper(private val context: Context) {
 
     actual suspend fun savePdf(
         frontData: ByteArray,
-        backData: ByteArray
+        backData: ByteArray,
+        registrationNumber: String,
+        vehicleType: String
     ): String = withContext(Dispatchers.IO) {
         try {
+            val cleanRegNo = registrationNumber.trim().uppercase().replace("\\s+".toRegex(), "_")
+            val cleanVehicleType = vehicleType.trim().uppercase()
             val timestamp = System.currentTimeMillis()
-            val fileName = "Plates_$timestamp.pdf"
+
+            // Final Name Example: Plate_LEA_1234_PRIVATE_CAR_1715843459.pdf
+            val fileName = "Plate_${cleanRegNo}_${cleanVehicleType}_$timestamp.pdf"
 
             // 1. PdfDocument Create karein
             val pdfDocument = PdfDocument()

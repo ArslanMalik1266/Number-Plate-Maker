@@ -37,6 +37,7 @@ fun OnboardingScreen() {
             when (targetStep) {
                 is PlateStep.VehicleSelection -> {
                     VehicleSelectionStep(
+                        viewModel = viewModel,
                         onVehicleSelected = { vehicle ->
                             viewModel.onVehicleSelected(vehicle)
                         }
@@ -45,6 +46,7 @@ fun OnboardingScreen() {
 
                 is PlateStep.ProvinceSelection -> {
                     ProvinceSelectionStep(
+                        viewModel = viewModel,
                         onProvinceSelected = { province ->
                             viewModel.onProvinceSelected(province)
                         },

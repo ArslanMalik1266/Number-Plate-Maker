@@ -43,6 +43,7 @@ import numberplatemaker.composeapp.generated.resources.islamabad_logo
 import numberplatemaker.composeapp.generated.resources.islamabad_strip_logo
 import numberplatemaker.composeapp.generated.resources.kpk_logo
 import numberplatemaker.composeapp.generated.resources.punjab_logo
+import numberplatemaker.composeapp.generated.resources.sindh_bike_logo
 import numberplatemaker.composeapp.generated.resources.sindh_logo
 import org.jetbrains.compose.resources.painterResource
 import kotlin.math.ceil
@@ -57,6 +58,7 @@ fun PlateCanvas(
     val punjabLogoPainter = painterResource(Res.drawable.punjab_logo)
     val kpkLogoPainter = painterResource(Res.drawable.kpk_logo)
     val sindhLogoPainter = painterResource(Res.drawable.sindh_logo)
+    val sindhBikeLogoPainter = painterResource(Res.drawable.sindh_bike_logo)
     val ajkLogoPainter = painterResource(Res.drawable.ajk_logo)
     val gbLogoPainter = painterResource(Res.drawable.gb_logo)
     val islamabadLogoPainter = painterResource(Res.drawable.islamabad_logo)
@@ -75,8 +77,15 @@ fun PlateCanvas(
 
         // --- 1. BASE BACKGROUND & BORDER ---
         val density = androidx.compose.ui.platform.LocalDensity
-        val strokeWidth = with(density) { 4.dp.toPx() }
+        val strokeWidth = with(density) { 6.dp.toPx() }
         val fixedCornerRadius = with(density) { 16.dp.toPx() }
+        val plateInset = w * 0.009f
+        val contentPad = w * 0.005f
+        val totalInset = plateInset + contentPad
+        val plateLeft = totalInset
+        val plateTop = totalInset
+        val plateW = w - totalInset * 2
+        val plateH = h - totalInset * 2
         if (!isExporting) {
             drawRoundRect(
                 color = Color(config.bgColor),
@@ -85,744 +94,778 @@ fun PlateCanvas(
             )
         }
         val padding = with(density) { 2.dp.toPx() }
-
+        val borderInset = plateInset + strokeWidth / 2
         drawRoundRect(
             color = Color(config.borderColor),
-            topLeft = Offset(strokeWidth / 2, strokeWidth / 2),
-            size = Size(w - strokeWidth, h - strokeWidth),
+            topLeft = Offset(borderInset, borderInset),
+            size = Size(w - borderInset * 2, h - borderInset * 2),
             cornerRadius = CornerRadius(fixedCornerRadius - padding, fixedCornerRadius - padding),
             style = Stroke(width = strokeWidth)
         )
-
-        // --- 2. THE STRIP LOGIC (Sindh & Islamabad style) ---
-        var contentOffsetX = 0f
-        var contentOffsetY = 0f
-
-        if (config.Strip) {
-            val stripColor = Color(config.stripColor)
-            when (config.stripOrientation) {
-                StripOrientation.VERTICAL_LEFT -> {
-                    // Sindh Style: Side bar
-                    val stripWidth = w * config.stripSizeFraction
-                    drawRect(color = stripColor, size = Size(stripWidth, h))
-                    contentOffsetX = stripWidth
-                }
-
-                StripOrientation.Horizontal_TOP -> {
-                    // Islamabad/New Style: Top bar
-                    val stripHeight = h * config.stripSizeFraction
-                    drawRect(color = stripColor, size = Size(w, stripHeight))
-                    contentOffsetY = stripHeight
-                }
-
-                else -> {}
-            }
+        val platePath = Path().apply {
+            addRoundRect(
+                RoundRect(
+                    rect = Rect(Offset(totalInset, totalInset), Size(plateW, plateH)),
+                    cornerRadius = CornerRadius(fixedCornerRadius, fixedCornerRadius)
+                )
+            )
         }
-        if (config.provinceName.equals("Diplomatic", ignoreCase = true)) {
-            drawDiplomaticPlate(config, textMeasurer, w, h, feFont)
-        } else {
+        clipPath(platePath) {
+            translate(left = totalInset, top = totalInset) {
 
-            when (config.provinceName.uppercase()) {
+                // --- 2. THE STRIP LOGIC (Sindh & Islamabad style) ---
+                var contentOffsetX = 0f
+                var contentOffsetY = 0f
 
-                "PUNJAB" -> {
-                    when (config.vehicleType) {
-                        VehicleType.MOTORBIKE, VehicleType.ELECTRIC_BIKE -> {
-                            if (config.side == PlateSide.FRONT) {
-                                drawPunjabBikeFront(
-                                    config, textMeasurer, w, h, feFont, punjabLogoPainter
-                                )
-                            } else {
-                                drawPunjabBikeRear(
-                                    config, textMeasurer, w, h, feFont, punjabLogoPainter
-                                )
-                            }
+                if (config.Strip) {
+                    val stripColor = Color(config.stripColor)
+                    when (config.stripOrientation) {
+                        StripOrientation.VERTICAL_LEFT -> {
+                            // Sindh Style: Side bar
+                            val stripWidth = plateW * config.stripSizeFraction
+                            drawRect(color = stripColor, size = Size(stripWidth, h))
+                            contentOffsetX = stripWidth
                         }
 
-                        VehicleType.PRIVATE_CAR -> {
-                            drawPunjabCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                punjabLogoPainter
-                            )
+                        StripOrientation.Horizontal_TOP -> {
+                            // Islamabad/New Style: Top bar
+                            val stripHeight = plateH * config.stripSizeFraction
+                            drawRect(color = stripColor, size = Size(w, stripHeight))
+                            contentOffsetY = stripHeight
                         }
 
-                        VehicleType.COMMERCIAL -> {
-                            drawPunjabCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = punjabLogoPainter
-                            )
-                        }
-
-                        VehicleType.GOVERNMENT -> {
-                            drawPunjabCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = punjabLogoPainter
-                            )
-                        }
-
-                        VehicleType.ELECTRIC_CAR -> {
-                            drawPunjabCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = punjabLogoPainter
-                            )
-                        }
-
-                        VehicleType.RICKSHAW -> {
-                            drawPunjabCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = kpkLogoPainter
-                            )
-                        }
-
-                        VehicleType.HEAVY_TRANSPORT -> {
-                            drawPunjabCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = kpkLogoPainter
-                            )
-                        }
-
-                        VehicleType.DIPLOMATIC -> {
-                            drawPunjabCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = punjabLogoPainter
-                            )
-                        }
+                        else -> {}
                     }
                 }
+                if (config.provinceName.equals("Diplomatic", ignoreCase = true)) {
+                    drawDiplomaticPlate(config, textMeasurer, w, h, feFont)
+                } else {
 
-                "SINDH" -> {
-                    when (config.vehicleType) {
-                        VehicleType.MOTORBIKE, VehicleType.ELECTRIC_BIKE -> {
-                            if (config.side == PlateSide.FRONT) {
-                                drawSindhBikeFront(
-                                    config = config,
-                                    textMeasurer = textMeasurer,
-                                    w = w,
-                                    h = h,
-                                    registrationFont = feFont,
-                                    logoPainter = sindhLogoPainter,
-                                    ajrakPainter
-                                )
-                            } else {
-                                drawSindhBikeRear(
-                                    config = config,
-                                    textMeasurer = textMeasurer,
-                                    w = w,
-                                    h = h,
-                                    registrationFont = feFont,
-                                    logoPainter = sindhLogoPainter,
-                                    ajrakPainter
-                                )
+                    when (config.provinceName.uppercase()) {
+
+                        "PUNJAB" -> {
+                            when (config.vehicleType) {
+                                VehicleType.MOTORBIKE, VehicleType.ELECTRIC_BIKE -> {
+                                    if (config.side == PlateSide.FRONT) {
+                                        drawPunjabBikeFront(
+                                            config,
+                                            textMeasurer,
+                                            plateW,
+                                            plateH,
+                                            feFont,
+                                            punjabLogoPainter
+                                        )
+                                    } else {
+                                        drawPunjabBikeRear(
+                                            config, textMeasurer, plateW, plateH, feFont, punjabLogoPainter
+                                        )
+                                    }
+                                }
+
+                                VehicleType.PRIVATE_CAR -> {
+                                    drawPunjabCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        plateW,
+                                        plateH,
+                                        feFont,
+                                        punjabLogoPainter
+                                    )
+                                }
+
+                                VehicleType.COMMERCIAL -> {
+                                    drawPunjabCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = punjabLogoPainter
+                                    )
+                                }
+
+                                VehicleType.GOVERNMENT -> {
+                                    drawPunjabCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = punjabLogoPainter
+                                    )
+                                }
+
+                                VehicleType.ELECTRIC_CAR -> {
+                                    drawPunjabCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = punjabLogoPainter
+                                    )
+                                }
+
+                                VehicleType.RICKSHAW -> {
+                                    drawPunjabCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = kpkLogoPainter
+                                    )
+                                }
+
+                                VehicleType.HEAVY_TRANSPORT -> {
+                                    drawPunjabCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = kpkLogoPainter
+                                    )
+                                }
+
+                                VehicleType.DIPLOMATIC -> {
+                                    drawPunjabCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = punjabLogoPainter
+                                    )
+                                }
                             }
                         }
 
-                        VehicleType.PRIVATE_CAR -> {
-                            drawSindhCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = sindhLogoPainter,
-                                ajrakBgPainter = ajrakPainter
-                            )
-                        }
+                        "SINDH" -> {
+                            when (config.vehicleType) {
+                                VehicleType.MOTORBIKE, VehicleType.ELECTRIC_BIKE -> {
+                                    if (config.side == PlateSide.FRONT) {
+                                        drawSindhBikeFront(
+                                            config = config,
+                                            textMeasurer = textMeasurer,
+                                            w = plateW,
+                                            h = plateH,
+                                            registrationFont = feFont,
+                                            logoPainter = sindhBikeLogoPainter,
+                                            ajrakPainter
+                                        )
+                                    } else {
+                                        drawSindhBikeRear(
+                                            config = config,
+                                            textMeasurer = textMeasurer,
+                                            w = plateW,
+                                            h = plateH,
+                                            registrationFont = feFont,
+                                            logoPainter = sindhBikeLogoPainter,
+                                            ajrakPainter
+                                        )
+                                    }
+                                }
 
-                        VehicleType.COMMERCIAL -> {
-                            drawSindhCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = sindhLogoPainter,
-                                ajrakBgPainter = ajrakPainter
-                            )
-                        }
+                                VehicleType.PRIVATE_CAR -> {
+                                    drawSindhCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = sindhLogoPainter,
+                                        ajrakBgPainter = ajrakPainter
+                                    )
+                                }
 
-                        VehicleType.GOVERNMENT -> {
-                            drawSindhCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = sindhLogoPainter,
-                                ajrakBgPainter = ajrakPainter
-                            )
-                        }
+                                VehicleType.COMMERCIAL -> {
+                                    drawSindhCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = sindhLogoPainter,
+                                        ajrakBgPainter = ajrakPainter
+                                    )
+                                }
 
-                        VehicleType.ELECTRIC_CAR -> {
-                            drawSindhCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = sindhLogoPainter,
-                                ajrakBgPainter = ajrakPainter
-                            )
-                        }
+                                VehicleType.GOVERNMENT -> {
+                                    drawSindhCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = sindhLogoPainter,
+                                        ajrakBgPainter = ajrakPainter
+                                    )
+                                }
 
-                        VehicleType.RICKSHAW -> {
-                            drawSindhCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = sindhLogoPainter,
-                                ajrakBgPainter = ajrakPainter
-                            )
-                        }
+                                VehicleType.ELECTRIC_CAR -> {
+                                    drawSindhCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = sindhLogoPainter,
+                                        ajrakBgPainter = ajrakPainter
+                                    )
+                                }
 
-                        VehicleType.HEAVY_TRANSPORT -> {
-                            drawSindhCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = sindhLogoPainter,
-                                ajrakBgPainter = ajrakPainter
-                            )
-                        }
+                                VehicleType.RICKSHAW -> {
+                                    drawSindhCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = sindhLogoPainter,
+                                        ajrakBgPainter = ajrakPainter
+                                    )
+                                }
 
-                        VehicleType.DIPLOMATIC -> {
-                            drawSindhCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = sindhLogoPainter,
-                                ajrakBgPainter = ajrakPainter
-                            )
-                        }
-                    }
-                }
+                                VehicleType.HEAVY_TRANSPORT -> {
+                                    drawSindhCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = sindhLogoPainter,
+                                        ajrakBgPainter = ajrakPainter
+                                    )
+                                }
 
-                "KHYBER PAKHTUNKHWA" -> {
-                    when (config.vehicleType) {
-                        VehicleType.MOTORBIKE, VehicleType.ELECTRIC_BIKE -> {
-                            if (config.side == PlateSide.FRONT) {
-                                drawKpkBikeFront(
-                                    config, textMeasurer, w, h, feFont, kpkLogoPainter
-                                )
-                            } else {
-                                drawKpkBikeRear(
-                                    config, textMeasurer, w, h, feFont, kpkLogoPainter
-                                )
+                                VehicleType.DIPLOMATIC -> {
+                                    drawSindhCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = sindhLogoPainter,
+                                        ajrakBgPainter = ajrakPainter
+                                    )
+                                }
                             }
                         }
 
-                        VehicleType.PRIVATE_CAR -> {
-                            drawKpkCarPlate(config, textMeasurer, w, h, feFont, kpkLogoPainter)
+                        "KHYBER PAKHTUNKHWA" -> {
+                            when (config.vehicleType) {
+                                VehicleType.MOTORBIKE, VehicleType.ELECTRIC_BIKE -> {
+                                    if (config.side == PlateSide.FRONT) {
+                                        drawKpkBikeFront(
+                                            config, textMeasurer, plateW, plateH, feFont, kpkLogoPainter
+                                        )
+                                    } else {
+                                        drawKpkBikeRear(
+                                            config, textMeasurer, plateW, plateH, feFont, kpkLogoPainter
+                                        )
+                                    }
+                                }
+
+                                VehicleType.PRIVATE_CAR -> {
+                                    drawKpkCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        plateW,
+                                        plateH,
+                                        feFont,
+                                        kpkLogoPainter
+                                    )
+                                }
+
+                                VehicleType.COMMERCIAL -> {
+                                    drawKpkCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = kpkLogoPainter
+                                    )
+                                }
+
+                                VehicleType.GOVERNMENT -> {
+                                    drawKpkCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = kpkLogoPainter
+                                    )
+                                }
+
+                                VehicleType.ELECTRIC_CAR -> {
+                                    drawKpkCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = kpkLogoPainter
+                                    )
+                                }
+
+                                VehicleType.RICKSHAW -> {
+                                    drawKpkCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = kpkLogoPainter
+                                    )
+                                }
+
+                                VehicleType.HEAVY_TRANSPORT -> {
+                                    drawKpkCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = kpkLogoPainter
+                                    )
+                                }
+
+                                VehicleType.DIPLOMATIC -> {
+                                    drawKpkCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = kpkLogoPainter
+                                    )
+                                }
+                            }
+
                         }
 
-                        VehicleType.COMMERCIAL -> {
-                            drawKpkCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = kpkLogoPainter
-                            )
-                        }
+                        "BALOCHISTAN" -> {
+                            when (config.vehicleType) {
+                                VehicleType.MOTORBIKE, VehicleType.ELECTRIC_BIKE -> {
+                                    if (config.side == PlateSide.FRONT) {
+                                        drawBalochistanBikeFront(
+                                            config,
+                                            textMeasurer,
+                                            w = plateW,
+                                            h = plateH,
+                                            feFont,
+                                            BalochistanLogoPainter
+                                        )
+                                    } else {
+                                        drawBalochistanBikeRear(
+                                            config,
+                                            textMeasurer,
+                                            w = plateW,
+                                            h = plateH,
+                                            feFont,
+                                            BalochistanLogoPainter
+                                        )
+                                    }
+                                }
 
-                        VehicleType.GOVERNMENT -> {
-                            drawKpkCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = kpkLogoPainter
-                            )
-                        }
+                                VehicleType.PRIVATE_CAR -> {
 
-                        VehicleType.ELECTRIC_CAR -> {
-                            drawKpkCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = kpkLogoPainter
-                            )
-                        }
+                                    drawBalochistanCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        feFont,
+                                        BalochistanLogoPainter
+                                    )
+                                }
 
-                        VehicleType.RICKSHAW -> {
-                            drawKpkCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = kpkLogoPainter
-                            )
-                        }
+                                VehicleType.COMMERCIAL -> {
+                                    drawKpkCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = BalochistanLogoPainter
+                                    )
+                                }
 
-                        VehicleType.HEAVY_TRANSPORT -> {
-                            drawKpkCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = kpkLogoPainter
-                            )
-                        }
+                                VehicleType.GOVERNMENT -> {
+                                    drawKpkCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = BalochistanLogoPainter
+                                    )
+                                }
 
-                        VehicleType.DIPLOMATIC -> {
-                            drawKpkCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = kpkLogoPainter
-                            )
-                        }
-                    }
+                                VehicleType.ELECTRIC_CAR -> {
+                                    drawKpkCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = BalochistanLogoPainter
+                                    )
+                                }
 
-                }
+                                VehicleType.RICKSHAW -> {
+                                    drawKpkCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = BalochistanLogoPainter
+                                    )
+                                }
 
-                "BALOCHISTAN" -> {
-                    when (config.vehicleType) {
-                        VehicleType.MOTORBIKE, VehicleType.ELECTRIC_BIKE -> {
-                            if (config.side == PlateSide.FRONT) {
-                                drawBalochistanBikeFront(
-                                    config, textMeasurer, w, h, feFont, BalochistanLogoPainter
-                                )
-                            } else {
-                                drawBalochistanBikeRear(
-                                    config, textMeasurer, w, h, feFont, BalochistanLogoPainter
-                                )
+                                VehicleType.HEAVY_TRANSPORT -> {
+                                    drawKpkCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = BalochistanLogoPainter
+                                    )
+                                }
+
+                                VehicleType.DIPLOMATIC -> {
+                                    drawKpkCarPlate(
+                                        config = config,
+                                        textMeasurer = textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        registrationFont = feFont,
+                                        logoPainter = BalochistanLogoPainter
+                                    )
+                                }
                             }
                         }
 
-                        VehicleType.PRIVATE_CAR -> {
+                        "ISLAMABAD" -> {
+                            when (config.vehicleType) {
+                                VehicleType.MOTORBIKE, VehicleType.ELECTRIC_BIKE -> {
+                                    if (config.side == PlateSide.FRONT) {
+                                        drawIslamabadBikeFront(
+                                            config,
+                                            textMeasurer,
+                                            w = plateW,
+                                            h = plateH,
+                                            feFont,
+                                            islamabadLogoPainter,
+                                            islamabadStripLogoPainter
+                                        )
+                                    } else {
+                                        drawIslamabadBikeRear(
+                                            config,
+                                            textMeasurer,
+                                            w = plateW,
+                                            h = plateH,
+                                            feFont,
+                                            islamabadLogoPainter,
+                                            islamabadStripLogoPainter
+                                        )
+                                    }
+                                }
 
-                            drawBalochistanCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                BalochistanLogoPainter
-                            )
-                        }
+                                VehicleType.PRIVATE_CAR -> {
+                                    drawIslamabadCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        feFont,
+                                        islamabadLogoPainter,
+                                        islamabadStripLogoPainter
+                                    )
+                                }
 
-                        VehicleType.COMMERCIAL -> {
-                            drawKpkCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = BalochistanLogoPainter
-                            )
-                        }
+                                VehicleType.COMMERCIAL -> {
+                                    drawIslamabadCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        feFont,
+                                        islamabadLogoPainter,
+                                        islamabadStripLogoPainter
+                                    )
+                                }
 
-                        VehicleType.GOVERNMENT -> {
-                            drawKpkCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = BalochistanLogoPainter
-                            )
-                        }
+                                VehicleType.GOVERNMENT -> {
+                                    drawIslamabadCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        feFont,
+                                        islamabadLogoPainter,
+                                        islamabadStripLogoPainter
+                                    )
+                                }
 
-                        VehicleType.ELECTRIC_CAR -> {
-                            drawKpkCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = BalochistanLogoPainter
-                            )
-                        }
+                                VehicleType.DIPLOMATIC -> {
+                                    drawIslamabadCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        feFont,
+                                        islamabadLogoPainter,
+                                        islamabadStripLogoPainter
+                                    )
+                                }
 
-                        VehicleType.RICKSHAW -> {
-                            drawKpkCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = BalochistanLogoPainter
-                            )
-                        }
+                                VehicleType.RICKSHAW -> {
+                                    drawIslamabadCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        feFont,
+                                        islamabadLogoPainter,
+                                        islamabadStripLogoPainter
+                                    )
+                                }
 
-                        VehicleType.HEAVY_TRANSPORT -> {
-                            drawKpkCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = BalochistanLogoPainter
-                            )
-                        }
+                                VehicleType.HEAVY_TRANSPORT -> {
+                                    drawIslamabadCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        feFont,
+                                        islamabadLogoPainter,
+                                        islamabadStripLogoPainter
+                                    )
+                                }
 
-                        VehicleType.DIPLOMATIC -> {
-                            drawKpkCarPlate(
-                                config = config,
-                                textMeasurer = textMeasurer,
-                                w = w,
-                                h = h,
-                                registrationFont = feFont,
-                                logoPainter = BalochistanLogoPainter
-                            )
-                        }
-                    }
-                }
-
-                "ISLAMABAD" -> {
-                    when (config.vehicleType) {
-                        VehicleType.MOTORBIKE, VehicleType.ELECTRIC_BIKE -> {
-                            if (config.side == PlateSide.FRONT) {
-                                drawIslamabadBikeFront(
-                                    config,
-                                    textMeasurer,
-                                    w,
-                                    h,
-                                    feFont,
-                                    islamabadLogoPainter,
-                                    islamabadStripLogoPainter
-                                )
-                            } else {
-                                drawIslamabadBikeRear(
-                                    config,
-                                    textMeasurer,
-                                    w,
-                                    h,
-                                    feFont,
-                                    islamabadLogoPainter,
-                                    islamabadStripLogoPainter
-                                )
+                                VehicleType.ELECTRIC_CAR -> {
+                                    drawIslamabadCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        feFont,
+                                        islamabadLogoPainter,
+                                        islamabadStripLogoPainter
+                                    )
+                                }
                             }
                         }
 
-                        VehicleType.PRIVATE_CAR -> {
-                            drawIslamabadCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                islamabadLogoPainter,
-                                islamabadStripLogoPainter
-                            )
-                        }
+                        "AJ&K" -> {
+                            when (config.vehicleType) {
+                                VehicleType.MOTORBIKE, VehicleType.ELECTRIC_BIKE -> {
+                                    if (config.side == PlateSide.FRONT) {
+                                        drawAjkBikeFront(
+                                            config,
+                                            textMeasurer,
+                                            w = plateW,
+                                            h = plateH,
+                                            feFont,
+                                            ajkLogoPainter,
+                                            ajkStripLogoPainter
+                                        )
+                                    } else {
+                                        drawAjkBikeRear(
+                                            config,
+                                            textMeasurer,
+                                            w = plateW,
+                                            h = plateH,
+                                            feFont,
+                                            ajkLogoPainter,
+                                            ajkStripLogoPainter
+                                        )
+                                    }
+                                }
 
-                        VehicleType.COMMERCIAL -> {
-                            drawIslamabadCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                islamabadLogoPainter,
-                                islamabadStripLogoPainter
-                            )
-                        }
+                                VehicleType.PRIVATE_CAR -> {
+                                    drawAjkCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        feFont,
+                                        ajkLogoPainter,
+                                        ajkStripLogoPainter
+                                    )
+                                }
 
-                        VehicleType.GOVERNMENT -> {
-                            drawIslamabadCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                islamabadLogoPainter,
-                                islamabadStripLogoPainter
-                            )
-                        }
+                                VehicleType.COMMERCIAL -> {
+                                    drawAjkCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        feFont,
+                                        ajkLogoPainter,
+                                        ajkStripLogoPainter
+                                    )
+                                }
 
-                        VehicleType.DIPLOMATIC -> {
-                            drawIslamabadCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                islamabadLogoPainter,
-                                islamabadStripLogoPainter
-                            )
-                        }
+                                VehicleType.GOVERNMENT -> {
+                                    drawAjkCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        feFont,
+                                        ajkLogoPainter,
+                                        ajkStripLogoPainter
+                                    )
+                                }
 
-                        VehicleType.RICKSHAW -> {
-                            drawIslamabadCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                islamabadLogoPainter,
-                                islamabadStripLogoPainter
-                            )
-                        }
+                                VehicleType.RICKSHAW -> {
+                                    drawAjkCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        feFont,
+                                        ajkLogoPainter,
+                                        ajkStripLogoPainter
+                                    )
+                                }
 
-                        VehicleType.HEAVY_TRANSPORT -> {
-                            drawIslamabadCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                islamabadLogoPainter,
-                                islamabadStripLogoPainter
-                            )
-                        }
+                                VehicleType.HEAVY_TRANSPORT -> {
+                                    drawAjkCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        feFont,
+                                        ajkLogoPainter,
+                                        ajkStripLogoPainter
+                                    )
+                                }
 
-                        VehicleType.ELECTRIC_CAR -> {
-                            drawIslamabadCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                islamabadLogoPainter,
-                                islamabadStripLogoPainter
-                            )
-                        }
-                    }
-                }
+                                VehicleType.ELECTRIC_CAR -> {
+                                    drawAjkCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        feFont,
+                                        ajkLogoPainter,
+                                        ajkStripLogoPainter
+                                    )
+                                }
 
-                "AJ&K" -> {
-                    when (config.vehicleType) {
-                        VehicleType.MOTORBIKE, VehicleType.ELECTRIC_BIKE -> {
-                            if (config.side == PlateSide.FRONT) {
-                                drawAjkBikeFront(
-                                    config,
-                                    textMeasurer,
-                                    w,
-                                    h,
-                                    feFont,
-                                    ajkLogoPainter,
-                                    ajkStripLogoPainter
-                                )
-                            } else {
-                                drawAjkBikeRear(
-                                    config,
-                                    textMeasurer,
-                                    w,
-                                    h,
-                                    feFont,
-                                    ajkLogoPainter,
-                                    ajkStripLogoPainter
-                                )
+                                VehicleType.DIPLOMATIC -> {
+                                    drawAjkCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        feFont,
+                                        ajkLogoPainter,
+                                        ajkStripLogoPainter
+                                    )
+                                }
                             }
                         }
 
-                        VehicleType.PRIVATE_CAR -> {
-                            drawAjkCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                ajkLogoPainter,
-                                ajkStripLogoPainter
-                            )
-                        }
+                        "GB" -> {
+                            when (config.vehicleType) {
+                                VehicleType.MOTORBIKE, VehicleType.ELECTRIC_BIKE -> {
+                                    if (config.side == PlateSide.FRONT) {
+                                        drawGbBikeFront(
+                                            config, textMeasurer, plateW, plateH, feFont, gbLogoPainter
+                                        )
+                                    } else {
+                                        drawGbBikeRear(
+                                            config, textMeasurer, plateW, plateH, feFont, gbLogoPainter
+                                        )
+                                    }
+                                }
 
-                        VehicleType.COMMERCIAL -> {
-                            drawAjkCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                ajkLogoPainter,
-                                ajkStripLogoPainter
-                            )
-                        }
+                                VehicleType.PRIVATE_CAR -> {
+                                    drawGbCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        feFont,
+                                        gbLogoPainter
+                                    )
+                                }
 
-                        VehicleType.GOVERNMENT -> {
-                            drawAjkCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                ajkLogoPainter,
-                                ajkStripLogoPainter
-                            )
-                        }
+                                VehicleType.COMMERCIAL -> {
+                                    drawGbCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        feFont,
+                                        gbLogoPainter
+                                    )
+                                }
 
-                        VehicleType.RICKSHAW -> {
-                            drawAjkCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                ajkLogoPainter,
-                                ajkStripLogoPainter
-                            )
-                        }
+                                VehicleType.GOVERNMENT -> {
+                                    drawGbCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        feFont,
+                                        gbLogoPainter
+                                    )
+                                }
 
-                        VehicleType.HEAVY_TRANSPORT -> {
-                            drawAjkCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                ajkLogoPainter,
-                                ajkStripLogoPainter
-                            )
-                        }
+                                VehicleType.RICKSHAW -> {
+                                    drawGbCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        feFont,
+                                        gbLogoPainter
+                                    )
+                                }
 
-                        VehicleType.ELECTRIC_CAR -> {
-                            drawAjkCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                ajkLogoPainter,
-                                ajkStripLogoPainter
-                            )
-                        }
+                                VehicleType.HEAVY_TRANSPORT -> {
+                                    drawGbCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        feFont,
+                                        gbLogoPainter
+                                    )
+                                }
 
-                        VehicleType.DIPLOMATIC -> {
-                            drawAjkCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                ajkLogoPainter,
-                                ajkStripLogoPainter
-                            )
-                        }
-                    }
-                }
+                                VehicleType.ELECTRIC_CAR -> {
+                                    drawGbCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        feFont,
+                                        gbLogoPainter
+                                    )
+                                }
 
-                "GB" -> {
-                    when (config.vehicleType) {
-                        VehicleType.MOTORBIKE, VehicleType.ELECTRIC_BIKE -> {
-                            if (config.side == PlateSide.FRONT) {
-                                drawGbBikeFront(
-                                    config, textMeasurer, w, h, feFont, gbLogoPainter
-                                )
-                            } else {
-                                drawGbBikeRear(
-                                    config, textMeasurer, w, h, feFont, gbLogoPainter
-                                )
+                                VehicleType.DIPLOMATIC -> {
+                                    drawGbCarPlate(
+                                        config,
+                                        textMeasurer,
+                                        w = plateW,
+                                        h = plateH,
+                                        feFont,
+                                        gbLogoPainter
+                                    )
+                                }
                             }
-                        }
-
-                        VehicleType.PRIVATE_CAR -> {
-                            drawGbCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                gbLogoPainter
-                            )
-                        }
-
-                        VehicleType.COMMERCIAL -> {
-                            drawGbCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                gbLogoPainter
-                            )
-                        }
-
-                        VehicleType.GOVERNMENT -> {
-                            drawGbCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                gbLogoPainter
-                            )
-                        }
-
-                        VehicleType.RICKSHAW -> {
-                            drawGbCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                gbLogoPainter
-                            )
-                        }
-
-                        VehicleType.HEAVY_TRANSPORT -> {
-                            drawGbCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                gbLogoPainter
-                            )
-                        }
-
-                        VehicleType.ELECTRIC_CAR -> {
-                            drawGbCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                gbLogoPainter
-                            )
-                        }
-
-                        VehicleType.DIPLOMATIC -> {
-                            drawGbCarPlate(
-                                config,
-                                textMeasurer,
-                                w,
-                                h,
-                                feFont,
-                                gbLogoPainter
-                            )
                         }
                     }
                 }
@@ -921,7 +964,7 @@ private fun DrawScope.drawPunjabBikeFront(
         )
     }
     val regX = (leftMargin + finalWidth) + (w - (leftMargin + finalWidth) - regText.size.width) / 2
-    val verticalOffset = regFontSize.value * 0.3f
+    val verticalOffset = regFontSize.value * 0.4f
     val regY = (h / 2) - (regText.size.height / 2) - verticalOffset
     withTransform({
         // scaleX = 1.0 (Normal Width), scaleY = 1.3 (30% more height)
@@ -934,6 +977,7 @@ private fun DrawScope.drawPunjabBikeFront(
     }) {
         drawText(regText, topLeft = Offset(regX, regY))
     }
+
 }
 
 private fun DrawScope.drawPunjabBikeRear(
@@ -982,14 +1026,20 @@ private fun DrawScope.drawPunjabBikeRear(
     }
 
     // --- 2. REGISTRATION (Total Plate Center) ---
-    val formattedReg = config.registrationNumber.replace("-", " ")
     val horizontalPadding = w * 0.08f
     val maxRegWidth = w - (horizontalPadding * 2)
-
-    var regFontSize = (h * 0.32f).toSp()
+    val cleanReg = config.registrationNumber.trim().replace("-", " ")
+    val parts = cleanReg.split("\\s+".toRegex())
+    val formattedReg = if (parts.size >= 2) {
+        parts.joinToString("\n")
+    } else {
+        cleanReg // Agar space nahi di to as-is rakhein
+    }
+    var regFontSize = (h * 0.28f).toSp()
     var regLayoutResult: TextLayoutResult
 
     do {
+
         regLayoutResult = textMeasurer.measure(
             text = formattedReg, style = TextStyle(
                 fontSize = regFontSize,
@@ -1009,7 +1059,7 @@ private fun DrawScope.drawPunjabBikeRear(
         }
     } while (regLayoutResult.lineCount > 2 && regFontSize.value > 10f)
 
-    val visualAdjustment = h * 0.05f
+    val visualAdjustment = h * 0.03f
     // Horizontally and Vertically centered in the whole plate
     val regX = (w - regLayoutResult.size.width) / 2
     val regY = (h - regLayoutResult.size.height) / 2 - visualAdjustment
@@ -1083,7 +1133,7 @@ private fun DrawScope.drawPunjabCarPlate(
 
     val rawText = config.registrationNumber.trim().uppercase()
     val maxRegWidth = w - (horizontalPadding * 2)
-    var regFontSize = (h * 0.58f).toSp()
+    var regFontSize = (h * 0.52f).toSp()
 
     // AnnotatedString for custom gap logic
     val customRegString = buildAnnotatedString {
@@ -1122,11 +1172,13 @@ private fun DrawScope.drawPunjabCarPlate(
             )
         )
     }
-
-    val regX = (w - regLayoutResult.size.width) / 2
-    val regY = (h * 0.38f) // Positioning below the top bar labels
-
-    // --- 3. APPLY VERTICAL STRETCH (1.1x) ---
+    val topRowBottomLimit = topRowCenterY + (logoHeight / 2f) + (h * 0.02f)
+    val usableVerticalSpace = h - topRowBottomLimit
+    val regX = (w - regLayoutResult.size.width) / 2f
+    val rawRegY =
+        topRowBottomLimit + (usableVerticalSpace / 2f) - (regLayoutResult.size.height / 2f)
+    val matrixAdjustment = (regLayoutResult.size.height * 0.15f)
+    val regY = rawRegY - matrixAdjustment - h * 0.03f
     withTransform({
         scale(
             scaleX = 1.0f, scaleY = 1.3f, // 1.1x Stretch as requested
@@ -1303,7 +1355,13 @@ private fun DrawScope.drawKpkBikeRear(
     }
 
     // --- 3. REGISTRATION (Gap Center) ---
-    val formattedReg = config.registrationNumber.replace("-", " ")
+    val cleanReg = config.registrationNumber.trim().replace("-", " ")
+    val parts = cleanReg.split("\\s+".toRegex())
+    val formattedReg = if (parts.size >= 2) {
+        parts.joinToString("\n")
+    } else {
+        cleanReg
+    }
     val maxRegWidth = w * 0.85f
 
     var regFontSize = (h * 0.32f).toSp()
@@ -1358,7 +1416,7 @@ private fun DrawScope.drawKpkCarPlate(
     val horizontalPadding = w * 0.08f // Padding thori barha di taake size thora chota lage
 
     // --- 1. TOP & BOTTOM BOUNDARIES ---
-    val topRowCenterY = h * 0.15f
+    val topRowCenterY = h * 0.12f
     val provText = textMeasurer.measure(
         config.provinceName.uppercase(),
         TextStyle(
@@ -1386,7 +1444,7 @@ private fun DrawScope.drawKpkCarPlate(
                 color = textColor
             )
         )
-        val cityY = (h * 0.90f) - (cityNameText.size.height / 2)
+        val cityY = (h * 0.88f) - (cityNameText.size.height / 2)
         drawText(cityNameText, topLeft = Offset((w / 2) - (cityNameText.size.width / 2), cityY))
         cityTopEdge = cityY
     }
@@ -1652,7 +1710,13 @@ private fun DrawScope.drawBalochistanBikeRear(
     }
 
     // --- 3. REGISTRATION (Gap Center) ---
-    val formattedReg = config.registrationNumber.replace("-", " ")
+    val cleanReg = config.registrationNumber.trim().replace("-", " ")
+    val parts = cleanReg.split("\\s+".toRegex())
+    val formattedReg = if (parts.size >= 2) {
+        parts.joinToString("\n")
+    } else {
+        cleanReg
+    }
     val maxRegWidth = w * 0.85f
 
     var regFontSize = (h * 0.32f).toSp()
@@ -1707,7 +1771,7 @@ private fun DrawScope.drawBalochistanCarPlate(
     val horizontalPadding = w * 0.08f // Padding thori barha di taake size thora chota lage
 
     // --- 1. TOP & BOTTOM BOUNDARIES ---
-    val topRowCenterY = h * 0.15f
+    val topRowCenterY = h * 0.12f
     val provText = textMeasurer.measure(
         config.provinceName.uppercase(),
         TextStyle(
@@ -1735,7 +1799,7 @@ private fun DrawScope.drawBalochistanCarPlate(
                 color = textColor
             )
         )
-        val cityY = (h * 0.90f) - (cityNameText.size.height / 2)
+        val cityY = (h * 0.88f) - (cityNameText.size.height / 2)
         drawText(cityNameText, topLeft = Offset((w / 2) - (cityNameText.size.width / 2), cityY))
         cityTopEdge = cityY
     }
@@ -1847,7 +1911,7 @@ private fun DrawScope.drawSindhBikeFront(
     ajrakBgPainter: androidx.compose.ui.graphics.painter.Painter
 ) {
     val textColor = Color(config.textColor)
-    val stripWidth = w * 0.15f
+    val stripWidth = w * 0.17f
     val borderThickness = w * 0.01f
     val cornerRadius = h * 0.10f
     val contentLeftEdge = stripWidth
@@ -1942,8 +2006,8 @@ private fun DrawScope.drawSindhBikeFront(
     val finalLayout2 = textMeasurer.measure(secondPart, regStyle)
 
     // --- 5. POSITIONING & DRAWING ---
-    val textY = (h / 2f) - (finalLayout1.size.height / 2f) - (h * 0.03f)
-    val logoY = textY + (finalLayout1.size.height / 2f) - (finalLogoHeight / 2f)
+    val textY = (h / 2f) - (finalLayout1.size.height / 2f) - (h * 0.05f)
+    val logoY = (h / 2f) - (finalLogoHeight / 2f)
 
     val finalTotalWidth =
         finalLayout1.size.width + finalLogoWidth + (finalInternalGap * 2) + finalLayout2.size.width
@@ -1966,13 +2030,13 @@ private fun DrawScope.drawSindhBikeFront(
     }
 
     // Draw Logo
+
     val logoX = startX + finalLayout1.size.width + finalInternalGap
     translate(left = logoX, top = logoY) {
         with(logoPainter) {
             draw(size = Size(finalLogoWidth, finalLogoHeight))
         }
     }
-
     // Draw Second Part
     val secondPartX = logoX + finalLogoWidth + finalInternalGap
     withTransform({
@@ -2002,7 +2066,7 @@ private fun DrawScope.drawSindhBikeRear(
 ) {
     val leftMargin = w * 0.06f
     val textColor = Color(config.textColor)
-    val stripWidth = w * 0.15f
+    val stripWidth = w * 0.17f
     val borderThickness = w * 0.01f
     val cornerRadius = h * 0.04f
 
@@ -2071,11 +2135,17 @@ private fun DrawScope.drawSindhBikeRear(
         }
     }
     // --- 2. REGISTRATION (Total Plate Center) ---
-    val formattedReg = config.registrationNumber.replace("-", " ")
+    val cleanReg = config.registrationNumber.trim().replace("-", " ")
+    val parts = cleanReg.split("\\s+".toRegex())
+    val formattedReg = if (parts.size >= 2) {
+        parts.joinToString("\n")
+    } else {
+        cleanReg
+    }
     val horizontalPadding = w * 0.08f
     val maxRegWidth = w - (horizontalPadding * 2)
 
-    var regFontSize = (h * 0.32f).toSp()
+    var regFontSize = (h * 0.30f).toSp()
     var regLayoutResult: TextLayoutResult
 
     do {
@@ -2763,9 +2833,12 @@ private fun DrawScope.drawGbBikeFront(
 
     // --- 1. LOGO (Inside Strip) ---
     val logoSize = h * 0.40f
+    val desiredCenterY = h * 0.5f
+    val logoTop = desiredCenterY - (logoSize / 2f)
+    val logoBottom = logoTop + logoSize
     val finalWidth = logoSize * (logoPainter.intrinsicSize.width / logoPainter.intrinsicSize.height)
 
-    translate(left = stripCenterX - (finalWidth / 2f), top = h * 0.15f) {
+    translate(left = stripCenterX - (finalWidth / 2f), top = logoTop) {
         with(logoPainter) {
             draw(size = Size(finalWidth, logoSize))
         }
@@ -2773,7 +2846,8 @@ private fun DrawScope.drawGbBikeFront(
 
     // --- 2. PROVINCE & CITY (Inside Strip) ---
     val stripContentColor = Color.White
-
+    val gapBetweenLogoAndText = h * 0.05f
+    val textTopPosition = logoBottom + gapBetweenLogoAndText
     val provText = textMeasurer.measure(
         config.provinceName.uppercase(),
         TextStyle(
@@ -2782,7 +2856,7 @@ private fun DrawScope.drawGbBikeFront(
             color = stripContentColor
         )
     )
-    drawText(provText, topLeft = Offset(stripCenterX - (provText.size.width / 2f), h * 0.60f))
+    drawText(provText, topLeft = Offset(stripCenterX - (provText.size.width / 2f), textTopPosition))
 
 
     // --- 3. REGISTRATION ---
@@ -2856,34 +2930,43 @@ private fun DrawScope.drawGbBikeRear(
     val stripCenterX = (borderStrokeWidth + stripWidth) / 2f
 
     // --- 1. LOGO & PROVINCE BLOCK (Inside Strip) ---
-    val logoSize = h * 0.20f
+    val logoSize = h * 0.25f
+    val desiredWidth = h * 0.5f
+    val top_logo = desiredWidth - (logoSize / 2f)
     val logoWidth = logoSize * (logoPainter.intrinsicSize.width / logoPainter.intrinsicSize.height)
 
     // Logo (White area items moving to strip)
-    translate(left = stripCenterX - (logoWidth / 2f), top = h * 0.15f) {
+    translate(left = stripCenterX - (logoWidth / 2f), top = top_logo) {
         with(logoPainter) {
             draw(size = Size(logoWidth, logoSize))
         }
     }
 
     val stripContentColor = Color.White
-
+    val logoBottom = top_logo + logoSize
+    val text_top = logoBottom + h * 0.05f - h * 0.02f
     // Province Text
     val provText = textMeasurer.measure(
         text = config.provinceName.uppercase(), style = TextStyle(
-            fontSize = (h * 0.12f).toSp(),
+            fontSize = (h * 0.10f).toSp(),
             fontWeight = FontWeight.ExtraBold,
             color = stripContentColor
         )
     )
-    drawText(provText, topLeft = Offset(stripCenterX - (provText.size.width / 2f), h * 0.40f))
+    drawText(provText, topLeft = Offset(stripCenterX - (provText.size.width / 2f), text_top))
 
 
     // --- 2. REGISTRATION (Remaining Area Center) ---
     val contentLeftEdge = stripWidth + borderStrokeWidth
     val availableContentWidth = w - contentLeftEdge - borderStrokeWidth
 
-    val formattedReg = config.registrationNumber.replace("-", " ")
+    val cleanReg = config.registrationNumber.trim().replace("-", " ")
+    val parts = cleanReg.split("\\s+".toRegex())
+    val formattedReg = if (parts.size >= 2) {
+        parts.joinToString("\n")
+    } else {
+        cleanReg
+    }
     val maxRegWidth = availableContentWidth * 0.90f
 
     var regFontSize = (h * 0.32f).toSp()
@@ -2938,7 +3021,7 @@ private fun DrawScope.drawGbCarPlate(
     val borderStrokeWidth = 10f
 
     // --- 0. STRIP AREA CALCULATIONS (25% of Plate) ---
-    val totalStripAreaWidth = w * 0.25f
+    val totalStripAreaWidth = w * 0.22f
     val leftRadius = 36f
 
     // 1. Draw Custom Rounded Blue Strip Background (Asymmetric Corners)
@@ -2967,7 +3050,8 @@ private fun DrawScope.drawGbCarPlate(
     // A. Logo Placement (Top padding adjusted to 12%)
     val logoSize = stripContentWidth * 0.7f
     val logoX = borderStrokeWidth + (stripContentWidth - logoSize) / 2f
-    val logoY = borderStrokeWidth + (h * 0.12f)
+    val desiredCenterY = h * 0.5f
+    val logoY = desiredCenterY - (logoSize / 2f)
 
     translate(left = logoX, top = logoY) {
         with(logoPainter) {
@@ -3084,7 +3168,7 @@ private fun DrawScope.drawIslamabadBikeFront(
     val borderStrokeWidth = 10f
 
     // --- 0. STRIP AREA ---
-    val totalStripAreaWidth = w * 0.25f
+    val totalStripAreaWidth = w * 0.22f
     val leftRadius = 36f
 
     val stripPath = Path().apply {
@@ -3115,6 +3199,18 @@ private fun DrawScope.drawIslamabadBikeFront(
     val logoY = borderStrokeWidth + (h * 0.12f) // Thora neeche move kiya
 
     translate(left = logoX, top = logoY) {
+        // STEP A: White Offset Background (Piche solid white outline mask)
+        withTransform({
+            scale(1.12f, 1.12f, pivot = Offset(logoSize / 2f, logoSize / 2f))
+        }) {
+            with(logoPainter) {
+                draw(
+                    size = Size(logoSize, logoSize),
+                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White)
+                )
+            }
+        }
+        // STEP B: Original Top Logo
         with(logoPainter) { draw(size = Size(logoSize, logoSize)) }
     }
 
@@ -3219,7 +3315,7 @@ private fun DrawScope.drawIslamabadBikeRear(
     val borderStrokeWidth = 10f
 
     // --- 0. STRIP AREA ---
-    val totalStripAreaWidth = w * 0.25f
+    val totalStripAreaWidth = w * 0.22f
     val leftRadius = 36f
 
     val stripPath = Path().apply {
@@ -3251,7 +3347,19 @@ private fun DrawScope.drawIslamabadBikeRear(
     val logoY = borderStrokeWidth + (h * 0.10f) + (h * 0.10f)
 
     translate(left = logoX, top = logoY) {
-        with(logoPainter) { draw(size = Size(logoSize, logoSize)) }
+        withTransform({
+            scale(1.12f, 1.12f, pivot = Offset(logoSize / 2f, logoSize / 2f))
+        }) {
+            with(logoPainter) {
+                draw(
+                    size = Size(logoSize, logoSize),
+                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White)
+                )
+            }
+        }
+        with(logoPainter) {
+            draw(size = Size(logoSize, logoSize))
+        }
     }
 
     // 2. Bottom Province Text
@@ -3301,7 +3409,7 @@ private fun DrawScope.drawIslamabadBikeRear(
     val firstPart = parts.getOrNull(0) ?: ""
     val secondPart = parts.getOrNull(1) ?: ""
 
-    val baseFontSize = (h * 0.36f).toSp()
+    val baseFontSize = (h * 0.30f).toSp()
 
     val fL1 = textMeasurer.measure(
         firstPart,
@@ -3351,7 +3459,7 @@ private fun DrawScope.drawIslamabadCarPlate(
 
     // --- 0. STRIP AREA ---
     val totalStripAreaWidth = w * 0.25f
-    val leftRadius = 36f
+    val leftRadius = h * 0.05f
 
     val stripPath = Path().apply {
         addRoundRect(
@@ -3381,9 +3489,20 @@ private fun DrawScope.drawIslamabadCarPlate(
     val logoY = borderStrokeWidth + (h * 0.10f)
 
     translate(left = logoX, top = logoY) {
-        with(logoPainter) { draw(size = Size(logoSize, logoSize)) }
+        withTransform({
+            scale(1.12f, 1.12f, pivot = Offset(logoSize / 2f, logoSize / 2f))
+        }) {
+            with(logoPainter) {
+                draw(
+                    size = Size(logoSize, logoSize),
+                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White)
+                )
+            }
+        }
+        with(logoPainter) {
+            draw(size = Size(logoSize, logoSize))
+        }
     }
-
     // 2. Bottom Province Text
     val provinceText = textMeasurer.measure(
         config.provinceName.uppercase(),
@@ -3536,5 +3655,34 @@ private fun DrawScope.drawDiplomaticPlate(
         )
     }) {
         drawText(finalRegText, topLeft = Offset(regX, regY))
+    }
+}
+
+
+
+
+private fun DrawScope.drawEmbossedText(
+    textLayoutResult: androidx.compose.ui.text.TextLayoutResult,
+    topLeft: Offset,
+    shadowOffsetPx: Float,
+    scaleX: Float = 1.0f,
+    scaleY: Float = 1.0f,
+    pivotOffset: Offset = topLeft
+) {
+    // Shadow layer
+    withTransform({
+        scale(scaleX = scaleX, scaleY = scaleY, pivot = pivotOffset)
+    }) {
+        drawText(
+            textLayoutResult,
+            topLeft = Offset(topLeft.x + shadowOffsetPx, topLeft.y + shadowOffsetPx),
+            alpha = 0.45f
+        )
+    }
+    // Main text
+    withTransform({
+        scale(scaleX = scaleX, scaleY = scaleY, pivot = pivotOffset)
+    }) {
+        drawText(textLayoutResult, topLeft = topLeft)
     }
 }

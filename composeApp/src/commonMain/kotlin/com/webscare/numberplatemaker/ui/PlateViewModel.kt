@@ -128,7 +128,18 @@ class PlateViewModel(
     ) {
         viewModelScope.launch {
             _uiState.update { it.copy(exporting = true) }
-            val result = exportPlateUseCase(frontImageData, backImageData, format)
+
+            val currentState = _uiState.value
+            val regNo = currentState.registrationNumber
+            val vehicleType = currentState.selectedVehicle?.name ?: "VEHICLE"
+            val result = exportPlateUseCase(
+                frontImageData = frontImageData,
+                backImageData = backImageData,
+                format = format,
+                registrationNumber = regNo,
+                vehicleType = vehicleType
+            )
+
             _uiState.update {
                 it.copy(
                     exporting = false,

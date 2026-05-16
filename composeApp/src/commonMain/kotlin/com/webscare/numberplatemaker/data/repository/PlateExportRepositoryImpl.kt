@@ -11,11 +11,17 @@ class PlateExportRepositoryImpl(
     override suspend fun export(
         frontImageData: ByteArray,
         backImageData: ByteArray,
-        format: ExportFormat
+        format: ExportFormat,
+        registrationNumber: String,
+        vehicleType: String
+
     ): Result<String> = runCatching {
         if (format == ExportFormat.PDF) {
             // PDF logic: Dono images ek hi document mein
-            helper.savePdf(frontImageData, backImageData)
+            helper.savePdf(frontData = frontImageData,
+                backData = backImageData,
+                registrationNumber = registrationNumber,
+                vehicleType = vehicleType)
         } else {
             helper.saveImage(
                 frontData = frontImageData,

@@ -9,6 +9,14 @@ class ExportPlateUseCase(
     suspend operator fun invoke(
         frontImageData: ByteArray,
         backImageData: ByteArray,
-        format: ExportFormat
-    ): Result<String> = repository.export(frontImageData, backImageData, format)
+        format: ExportFormat,
+        registrationNumber: String,
+        vehicleType: String
+    ): Result<String> = repository.export(
+        frontImageData = frontImageData,
+        backImageData = backImageData,
+        format = format,
+        registrationNumber = registrationNumber,
+        vehicleType = vehicleType
+    )
 }

@@ -6,6 +6,8 @@ interface PlateExportRepository {
     suspend fun export(
         frontImageData: ByteArray,
         backImageData: ByteArray,
-        format: ExportFormat
+        format: ExportFormat,
+        registrationNumber: String,
+        vehicleType: String
     ): Result<String>
 }
