@@ -3642,7 +3642,7 @@ private fun DrawScope.drawDiplomaticPlate(
 
     val regX = (w - finalRegText.size.width) / 2f
     val regY =
-        (h - finalRegText.size.height) / 2f - h * 0.03f
+        (h - finalRegText.size.height) / 2f - h * 0.05f
 
     withTransform({
         scale(

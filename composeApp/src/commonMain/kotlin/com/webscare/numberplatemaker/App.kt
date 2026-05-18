@@ -23,6 +23,7 @@ import org.koin.compose.viewmodel.koinViewModel
 
 import androidx.compose.runtime.Composable
 import com.webscare.numberplatemaker.di.appModules
+import com.webscare.numberplatemaker.ui.home.HomeScreen
 import com.webscare.numberplatemaker.ui.onboarding.OnboardingScreen
 import org.koin.compose.KoinContext
 import org.koin.compose.KoinApplication
@@ -33,7 +34,7 @@ fun App() {
         modules(appModules)
     }) {
         KoinContext {
-            OnboardingScreen()
+            HomeScreen( onNavigateToSettings = {}, onGeneratePlateClick = {})
         }
     }
 }

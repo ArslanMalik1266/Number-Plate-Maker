@@ -118,7 +118,6 @@ fun ResultPreviewStep(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(2.1f) // Standard aspect ratio placeholder for cleaner alignment
                         .clip(RoundedCornerShape(16.dp))
                         .background(Color(plate.config.bgColor))
                         .drawWithContent {
@@ -148,7 +147,6 @@ fun ResultPreviewStep(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(2.1f)
                         .clip(RoundedCornerShape(16.dp))
                         .background(Color(plate.config.bgColor))
                         .drawWithContent {
