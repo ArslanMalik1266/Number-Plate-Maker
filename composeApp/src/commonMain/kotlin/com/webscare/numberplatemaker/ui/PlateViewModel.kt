@@ -3,6 +3,7 @@ package com.webscare.numberplatemaker.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.webscare.numberplatemaker.domain.models.ExportFormat
+import com.webscare.numberplatemaker.domain.models.PlateConfig
 import com.webscare.numberplatemaker.domain.models.PlateInputConfig
 import com.webscare.numberplatemaker.domain.models.PlateModel
 import com.webscare.numberplatemaker.domain.models.PlateSide
@@ -50,10 +51,25 @@ class PlateViewModel(
             it.copy(
                 selectedVehicle = vehicle,
                 currentStep = nextStep,
-                selectedProvince = if (vehicle == VehicleType.DIPLOMATIC) Province.ISLAMABAD else it.selectedProvince
+                selectedProvince = if (vehicle == VehicleType.DIPLOMATIC) Province.ISLAMABAD else it.selectedProvince,
+                frontPlate = null,
+                backPlate = null
             )
         }
     }
+    fun updatePreview(newNumber: String) {
+        _uiState.update { currentState ->
+            val currentFront = currentState.frontPlate ?: return@update currentState
+            val updatedConfig = currentFront.config.copy(
+                registrationNumber = newNumber
+            )
+            currentState.copy(
+                registrationNumber = newNumber,
+                frontPlate = currentFront.copy(config = updatedConfig)
+            )
+        }
+    }
+
     fun onProvinceSelected(province: Province) {
         val config = getPlateInputConfigUseCase(province, _uiState.value.selectedVehicle!!)
         _uiState.update {
@@ -61,7 +77,9 @@ class PlateViewModel(
                 selectedProvince = province,
                 currentStep = PlateStep.InputNumber,
                 plateInputConfig = config,
-                formatHint = config.formatHint
+                formatHint = config.formatHint,
+                frontPlate = null,
+                backPlate = null
             )
         }
     }
@@ -86,8 +104,36 @@ class PlateViewModel(
         }
         _uiState.update { it.copy(registrationNumber = enforced) }
     }
+    fun getProvinceDefaultConfig(province: Province?, side: PlateSide): PlateConfig? {
+        if (province == null) return null
+        val vehicle = _uiState.value.selectedVehicle ?: VehicleType.PRIVATE_CAR
 
-    fun generatePlatePreview(regNumber: String) {
+        val previewData = getPlateConfigUseCase(
+            vehicleType = vehicle,
+            province = province,
+            regNumber = "AAA-0000"
+        )
+        return when(side) {
+            PlateSide.FRONT -> previewData.frontPlate
+            PlateSide.BACK -> previewData.backPlate
+        }
+    }
+    // PlateViewModel.kt
+    fun isGenerateButtonEnabled(): Boolean {
+        val state = _uiState.value
+        val config = currentConfig ?: return false
+
+        val regNumber = state.registrationNumber
+        val letters = regNumber.filter { it.isLetter() }
+        val numbers = regNumber.filter { it.isDigit() }
+
+        // Validation Logic
+        val isLettersValid = letters.length in config.minLetterCount..config.maxLetterCount
+        val isNumbersValid = numbers.length in config.minNumberCount..config.maxNumberCount
+
+        return isLettersValid && isNumbersValid
+    }
+    fun generatePlatePreview(regNumber: String, onComplete: () -> Unit) {
         val currentState = _uiState.value
         val vehicle = currentState.selectedVehicle
         val province = currentState.selectedProvince
@@ -95,29 +141,23 @@ class PlateViewModel(
         if (vehicle != null && province != null && regNumber.isNotBlank()) {
             _uiState.update { it.copy(loading = true) }
 
-            // UseCase se data bundle mangwaya
             val previewData = getPlateConfigUseCase(
                 vehicleType = vehicle,
                 province = province,
                 regNumber = regNumber
             )
 
-            // State mein Front aur Back dono ko alag save kiya
             _uiState.update {
                 it.copy(
                     registrationNumber = regNumber,
-                    frontPlate = PlateModel(
-                        side = PlateSide.FRONT,
-                        config = previewData.frontPlate
-                    ),
-                    backPlate = PlateModel(
-                        side = PlateSide.BACK,
-                        config = previewData.backPlate
-                    ),
+                    frontPlate = PlateModel(PlateSide.FRONT, previewData.frontPlate),
+                    backPlate = PlateModel(PlateSide.BACK, previewData.backPlate),
                     currentStep = PlateStep.Preview,
                     loading = false
                 )
             }
+            // Data update hone ke baad navigate karo
+            onComplete()
         }
     }
 

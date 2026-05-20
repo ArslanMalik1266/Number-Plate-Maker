@@ -130,8 +130,8 @@ fun InputNumberStep(
                 ),
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF1A1A1A),       // Sharp dark charcoal focus edge
-                    unfocusedBorderColor = Color(0xFFE5E2DA),     // Smooth grey-beige unselected border
+                    focusedBorderColor = Color(0xFF1A1A1A),
+                    unfocusedBorderColor = Color(0xFFE5E2DA),
                     focusedContainerColor = Color.White,
                     unfocusedContainerColor = Color.White,
                     cursorColor = Color(0xFF1A1A1A)
@@ -149,7 +149,6 @@ fun InputNumberStep(
                 textAlign = TextAlign.Start
             )
 
-            // Dynamic spacer configuration for list layout scroll structure
             Spacer(modifier = Modifier.weight(1f))
             Spacer(modifier = Modifier.height(40.dp))
 
