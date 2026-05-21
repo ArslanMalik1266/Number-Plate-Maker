@@ -2,6 +2,7 @@ package com.webscare.numberplatemaker.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.webscare.numberplatemaker.data.local.entity.PlateEntity
 import com.webscare.numberplatemaker.domain.models.ExportFormat
 import com.webscare.numberplatemaker.domain.models.PlateConfig
 import com.webscare.numberplatemaker.domain.models.PlateInputConfig
@@ -10,22 +11,37 @@ import com.webscare.numberplatemaker.domain.models.PlateSide
 import com.webscare.numberplatemaker.domain.models.PlateStep
 import com.webscare.numberplatemaker.domain.models.PlateUiState
 import com.webscare.numberplatemaker.domain.models.Province
+import com.webscare.numberplatemaker.domain.models.RecentPlateItem
 import com.webscare.numberplatemaker.domain.models.VehicleType
+import com.webscare.numberplatemaker.domain.usecases.DeleteAllPlatesUseCase
+import com.webscare.numberplatemaker.domain.usecases.DeletePlateUseCase
 import com.webscare.numberplatemaker.domain.usecases.EnforcePlateInputUseCase
 import com.webscare.numberplatemaker.domain.usecases.ExportPlateUseCase
 import com.webscare.numberplatemaker.domain.usecases.GetPlateConfigUseCase
 import com.webscare.numberplatemaker.domain.usecases.GetPlateInputConfigUseCase
+import com.webscare.numberplatemaker.domain.usecases.GetPlatesUseCase
+import com.webscare.numberplatemaker.domain.usecases.SavePlateUseCase
+import com.webscare.numberplatemaker.mapper.toDomain
+import com.webscare.numberplatemaker.mapper.toEntity
+import com.webscare.numberplatemaker.util.ExportResult
+import com.webscare.numberplatemaker.util.PlatformClock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.ExperimentalTime
 
 class PlateViewModel(
+    private val clock: PlatformClock,
     private val getPlateConfigUseCase: GetPlateConfigUseCase,
     private val exportPlateUseCase: ExportPlateUseCase,
     private val getPlateInputConfigUseCase: GetPlateInputConfigUseCase,
-    private val enforcePlateInputUseCase: EnforcePlateInputUseCase
+    private val enforcePlateInputUseCase: EnforcePlateInputUseCase,
+    private val getPlatesUseCase: GetPlatesUseCase,
+    private val savePlateUseCase: SavePlateUseCase,
+    private val deletePlateUseCase: DeletePlateUseCase,
+    private val deleteAllPlatesUseCase: DeleteAllPlatesUseCase
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PlateUiState())
     val uiState: StateFlow<PlateUiState> = _uiState.asStateFlow()
@@ -38,6 +54,35 @@ class PlateViewModel(
             }
         }
 
+
+    fun savePlate(plate: PlateEntity) {
+        viewModelScope.launch {
+            savePlateUseCase(plate)
+        }
+    }
+
+    // 3. Single plate delete karne ke liye
+    fun deletePlate(plate: PlateEntity) {
+        viewModelScope.launch {
+            deletePlateUseCase(plate)
+        }
+    }
+
+    // 4. Sab kuch clear karne ke liye
+    fun clearAllPlates() {
+        viewModelScope.launch {
+            deleteAllPlatesUseCase()
+        }
+    }
+
+    init {
+        viewModelScope.launch {
+            getPlatesUseCase().collect { entities ->
+                val domainModels = entities.map { it.toDomain() }
+                _uiState.update { it.copy(savedPlates = domainModels) }
+            }
+        }
+    }
 
     // --- UI Events (User Actions) ---
 
@@ -161,31 +206,48 @@ class PlateViewModel(
         }
     }
 
+    // PlateViewModel.kt mein:
+
+    @OptIn(ExperimentalTime::class)
     fun exportPlate(
         frontImageData: ByteArray,
         backImageData: ByteArray,
         format: ExportFormat
     ) {
+        val timestamp = clock.getCurrentMillis()
         viewModelScope.launch {
             _uiState.update { it.copy(exporting = true) }
-
-            val currentState = _uiState.value
-            val regNo = currentState.registrationNumber
-            val vehicleType = currentState.selectedVehicle?.name ?: "VEHICLE"
-            val result = exportPlateUseCase(
-                frontImageData = frontImageData,
-                backImageData = backImageData,
-                format = format,
-                registrationNumber = regNo,
-                vehicleType = vehicleType
-            )
-
-            _uiState.update {
-                it.copy(
-                    exporting = false,
-                    exportSuccess = result.isSuccess,
-                    exportError = result.exceptionOrNull()?.message
+            try {
+                val currentState = _uiState.value
+                // 1. Export Action
+                val result = exportPlateUseCase(
+                    frontImageData, backImageData, format,
+                    currentState.registrationNumber,
+                    currentState.selectedVehicle?.name ?: "VEHICLE"
                 )
+
+                when (result) {
+                    is ExportResult.Success -> {
+                        // 2. Persistence Action
+                        val newPlate = RecentPlateItem(
+                            id = timestamp.toString(),
+                            plateNumber = currentState.registrationNumber,
+                            category = currentState.selectedVehicle?.name ?: "Unknown",
+                            province = currentState.selectedProvince?.name ?: "Unknown",
+                            timestamp = timestamp,
+                            plateImageRes = result.filePath
+                        )
+                        savePlateUseCase(newPlate.toEntity())
+
+                        _uiState.update { it.copy(exporting = false, exportSuccess = true) }
+                    }
+                    is ExportResult.Error -> {
+                        _uiState.update { it.copy(exporting = false, exportError = result.message) }
+                    }
+                    else -> {}
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(exporting = false, exportError = e.message) }
             }
         }
     }
@@ -225,4 +287,5 @@ class PlateViewModel(
             it.copy(numberInput = enforcePlateInputUseCase.enforceNumbers(raw, config))
         }
     }
+
 }

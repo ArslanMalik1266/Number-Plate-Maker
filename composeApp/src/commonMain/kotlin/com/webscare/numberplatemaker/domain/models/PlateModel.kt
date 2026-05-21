@@ -1,11 +1,15 @@
 package com.webscare.numberplatemaker.domain.models
 
 import androidx.compose.ui.text.font.FontFamily
+import com.webscare.numberplatemaker.data.local.entity.PlateEntity
+import com.webscare.numberplatemaker.util.ExportResult
 import org.jetbrains.compose.resources.DrawableResource
 
 
 data class PlateUiState(
     val currentStep: PlateStep = PlateStep.VehicleSelection,
+    val savedPlates: List<RecentPlateItem> = emptyList(),
+    val exportStatus: ExportResult? = null,
     val selectedVehicle: VehicleType? = null,
     val selectedProvince: Province? = null,
     val registrationNumber: String = "",

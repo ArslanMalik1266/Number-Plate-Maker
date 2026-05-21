@@ -5,6 +5,6 @@ data class RecentPlateItem(
     val plateNumber: String,
     val category: String,
     val province: String,
-    val timestamp: String,
+    val timestamp: Long,
     val plateImageRes: String? = null
 )

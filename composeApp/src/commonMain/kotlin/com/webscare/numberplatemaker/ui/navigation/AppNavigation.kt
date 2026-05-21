@@ -25,6 +25,7 @@ fun NavGraphBuilder.appNavigation(
                 navController.navigate(Screen.VehicleType.route)
             },
             onPlateItemClick = { },
+            viewModel = viewModel
         )
     }
     composable(Screen.History.route) {

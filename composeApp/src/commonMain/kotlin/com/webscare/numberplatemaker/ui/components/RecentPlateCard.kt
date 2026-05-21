@@ -20,12 +20,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+//import coil3.compose.AsyncImage
+//import coil3.compose.LocalPlatformContext
+//import coil3.request.ImageRequest
+//import coil3.request.crossfade
 import com.webscare.numberplatemaker.domain.models.RecentPlateItem
 import com.webscare.numberplatemaker.ui.theme.PlateColors
 import com.webscare.numberplatemaker.util.addPressEffect
@@ -45,24 +48,12 @@ fun RecentPlateCard(
             .padding(all = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier
-                .width(110.dp)
-                .height(52.dp)
-                .background(
-                    color = if (item.category == "Diplomatic") Color(0xFFB02A2A) else Color(0xFFF2F4F3),
-                    shape = RoundedCornerShape(8.dp)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "Diplomatic",
-                color = Color.Black,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 14.sp,
-                letterSpacing = 0.5.sp
-            )
-        }
+//        AsyncImage(
+//            model = item.plateImageRes,
+//            contentDescription = "Plate Image",
+//            modifier = Modifier.size(60.dp),
+//            contentScale = ContentScale.Fit
+//        )
         Spacer(modifier = Modifier.width(16.dp))
         Column(
             modifier = Modifier.weight(1.0f),

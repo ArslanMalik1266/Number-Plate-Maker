@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +29,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,7 +42,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.webscare.numberplatemaker.domain.models.RecentPlateItem
+import com.webscare.numberplatemaker.mapper.toEntity
+import com.webscare.numberplatemaker.ui.PlateViewModel
 import com.webscare.numberplatemaker.ui.components.PkPlateTopAppBar
 import com.webscare.numberplatemaker.ui.components.RecentPlateCard
 import com.webscare.numberplatemaker.ui.theme.PlateColors
@@ -47,22 +53,14 @@ import com.webscare.numberplatemaker.util.addPressEffect
 
 @Composable
 fun HomeScreen(
+    viewModel: PlateViewModel,
     onNavigateToSettings: () -> Unit,
     onViewAllRecentClick: () -> Unit,
     onGeneratePlateClick: () -> Unit,
     onPlateItemClick: (RecentPlateItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val mockRecentPlates = remember {
-        listOf(
-            RecentPlateItem("1", "CD SACDS", "Diplomatic", "Diplomatic", "20 May 26 · 09:41"),
-            RecentPlateItem("2", "ZXC", "Motorcycle", "Balochistan", "20 May 26 · 09:41"),
-            RecentPlateItem("3", "SXV", "Motorcycle", "Balochistan", "20 May 26 · 09:39"),
-            RecentPlateItem("4", "XXCB", "Motorcycle", "Sindh", "20 May 26 · 09:38"),
-            RecentPlateItem("5", "LH 456", "Private Car", "Punjab", "19 May 26 · 18:22"),
-            RecentPlateItem("6", "RI 789", "Commercial", "Islamabad", "18 May 26 · 14:15")
-        )
-    }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
         modifier = modifier,
@@ -122,15 +120,12 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(bottom = 8.dp)
             ){
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        mockRecentPlates.forEach { plateItem ->
-                            RecentPlateCard(
-                                item = plateItem,
-                                onItemClick = onPlateItemClick
-                            )
-                        }
-                    }
+                items(uiState.savedPlates) { plateItem ->
+                    RecentPlateCard(
+                        item = plateItem,
+                        onItemClick = onPlateItemClick,
+                        onDeleteClick = { viewModel.deletePlate(plateItem.toEntity()) }
+                    )
                 }
             }
         }
