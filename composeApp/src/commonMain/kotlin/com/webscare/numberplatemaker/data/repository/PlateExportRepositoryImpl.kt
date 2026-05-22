@@ -16,18 +16,24 @@ class PlateExportRepositoryImpl(
         vehicleType: String
 
     ): Result<String> = runCatching {
-        if (format == ExportFormat.PDF) {
-            // PDF logic: Dono images ek hi document mein
-            helper.savePdf(frontData = frontImageData,
-                backData = backImageData,
-                registrationNumber = registrationNumber,
-                vehicleType = vehicleType)
-        } else {
-            helper.saveImage(
-                frontData = frontImageData,
-                backData = backImageData,
-                format = format
-            )
-        }
+        helper.saveImage(
+            frontData = frontImageData,
+            backData = backImageData,
+            format = format
+        )
+    }
+
+    override suspend fun savePdf(
+        frontImageData: ByteArray,
+        backImageData: ByteArray,
+        registrationNumber: String,
+        vehicleType: String
+    ): String {
+        return helper.savePdf(
+            frontData = frontImageData,
+            backData = backImageData,
+            registrationNumber = registrationNumber,
+            vehicleType = vehicleType
+        )
     }
 }

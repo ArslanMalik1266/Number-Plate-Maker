@@ -61,6 +61,8 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val stats = remember(uiState.savedPlates) { viewModel.getStats() }
+
 
     Scaffold(
         modifier = modifier,
@@ -106,26 +108,49 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                StatItemCard(value = "4", label = "Total")
-                StatItemCard(value = "4", label = "Provinces")
-                StatItemCard(value = "4", label = "This week")
+                StatItemCard(value = stats.first.toString(), label = "Total")
+                StatItemCard(value = stats.second.toString(), label = "Provinces")
+                StatItemCard(value = stats.third.toString(), label = "This week")
             }
             Spacer(modifier = Modifier.height(24.dp))
             RecentPlatesHeader(onViewAllClick = onViewAllRecentClick)
             Spacer(modifier = Modifier.height(8.dp))
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(bottom = 8.dp)
-            ){
-                items(uiState.savedPlates) { plateItem ->
-                    RecentPlateCard(
-                        item = plateItem,
-                        onItemClick = onPlateItemClick,
-                        onDeleteClick = { viewModel.deletePlate(plateItem.toEntity()) }
+            if (uiState.savedPlates.isEmpty()) {
+                // Empty State UI
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 40.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "No plates generated yet",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = PlateColors.SubtitleGray
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Tap the green button to start",
+                        fontSize = 14.sp,
+                        color = PlateColors.SubtitleGray.copy(alpha = 0.6f)
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(bottom = 8.dp)
+                ) {
+                    items(uiState.savedPlates) { plateItem ->
+                        RecentPlateCard(
+                            item = plateItem,
+                            onItemClick = onPlateItemClick,
+                        )
+                    }
                 }
             }
         }

@@ -25,6 +25,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 //import coil3.compose.AsyncImage
 //import coil3.compose.LocalPlatformContext
 //import coil3.request.ImageRequest
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.webscare.numberplatemaker.domain.models.RecentPlateItem
 import com.webscare.numberplatemaker.ui.theme.PlateColors
 import com.webscare.numberplatemaker.util.addPressEffect
+import com.webscare.numberplatemaker.util.formatTimestamp
 
 @Composable
 fun RecentPlateCard(
@@ -48,39 +50,56 @@ fun RecentPlateCard(
             .padding(all = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-//        AsyncImage(
-//            model = item.plateImageRes,
-//            contentDescription = "Plate Image",
-//            modifier = Modifier.size(60.dp),
-//            contentScale = ContentScale.Fit
-//        )
+        AsyncImage(
+            model = item.plateImageRes,
+            contentDescription = "Plate Image",
+            modifier = Modifier.size(60.dp),
+            contentScale = ContentScale.Fit
+        )
         Spacer(modifier = Modifier.width(16.dp))
         Column(
             modifier = Modifier.weight(1.0f),
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Private Car",
+                text = item.category,
                 fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.Medium,
                 color = PlateColors.SubtitleGray
             )
 
             Text(
-                text = "ABC 123",
-                fontSize = 18.sp,
+                text = item.plateNumber,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = PlateColors.SoftBlack
+                color = PlateColors.SoftBlack,
+                lineHeight = 20.sp
             )
 
             Spacer(modifier = Modifier.height(2.dp))
 
-            Text(
-                text = "Punjab - 20 May 2026",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                color = PlateColors.SubtitleGray
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = item.province,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = PlateColors.SubtitleGray
+                )
+                Text(
+                    text = "·",
+                    fontSize = 12.sp,
+                    color = PlateColors.SubtitleGray
+                )
+                Text(
+                    text = formatTimestamp(item.timestamp),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = PlateColors.SubtitleGray
+                )
+            }
         }
         if (onDeleteClick != null) {
             Box(

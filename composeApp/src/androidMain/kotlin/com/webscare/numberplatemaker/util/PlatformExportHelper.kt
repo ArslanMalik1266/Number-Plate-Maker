@@ -23,21 +23,27 @@ actual class PlatformExportHelper(private val context: Context) {
         try {
             val timestamp = System.currentTimeMillis()
 
-            // 1. Front Plate Save Karein
-            val frontName = "Plate_Front_$timestamp"
-            saveToGallery(frontData, frontName, format)
-
-            // 2. Back Plate Save Karein (Dono alag files hongi)
-            val backName = "Plate_Back_$timestamp"
-            saveToGallery(backData, backName, format)
-
-            "Success: Both plates saved to Gallery"
+            if (format == ExportFormat.PDF) {
+                // Gallery mein save mat karo — sirf app directory mein PNG thumbnails
+                val frontThumb = saveToAppDirectory(frontData, "thumb_front_$timestamp")
+                val backThumb = saveToAppDirectory(backData, "thumb_back_$timestamp")
+                "${frontThumb ?: ""}|${backThumb ?: ""}"
+            } else {
+                val frontPath = saveToGallery(frontData, "Plate_Front_$timestamp", format)
+                val backPath = saveToGallery(backData, "Plate_Back_$timestamp", format)
+                val fPath = frontPath ?: ""
+                val bPath = backPath ?: ""
+                if (fPath.isEmpty() && bPath.isEmpty()) {
+                    throw Exception("Failed to save images to gallery")
+                }
+                "$fPath|$bPath"
+            }
         } catch (e: Exception) {
             "Error: ${e.message}"
         }
     }
 
-    private fun saveToGallery(data: ByteArray, fileName: String, format: ExportFormat) {
+    private fun saveToGallery(data: ByteArray, fileName: String, format: ExportFormat): String? {
         val extension = if (format == ExportFormat.PNG) "png" else "jpg"
         val mimeType = if (format == ExportFormat.PNG) "image/png" else "image/jpeg"
 
@@ -54,7 +60,9 @@ actual class PlatformExportHelper(private val context: Context) {
             resolver.openOutputStream(it)?.use { stream ->
                 stream.write(data)
             }
+            return it.toString() // Yahan URI string return hogi
         }
+        return null
     }
 
     actual suspend fun savePdf(
@@ -67,36 +75,30 @@ actual class PlatformExportHelper(private val context: Context) {
             val cleanRegNo = registrationNumber.trim().uppercase().replace("\\s+".toRegex(), "_")
             val cleanVehicleType = vehicleType.trim().uppercase()
             val timestamp = System.currentTimeMillis()
-
-            // Final Name Example: Plate_LEA_1234_PRIVATE_CAR_1715843459.pdf
             val fileName = "Plate_${cleanRegNo}_${cleanVehicleType}_$timestamp.pdf"
 
-            // 1. PdfDocument Create karein
             val pdfDocument = PdfDocument()
             val paint = Paint()
 
-            // Byte array ko Bitmaps mein convert karein
             val frontBitmap = BitmapFactory.decodeByteArray(frontData, 0, frontData.size)
             val backBitmap = BitmapFactory.decodeByteArray(backData, 0, backData.size)
 
-            // 2. Front Plate Page (Page 1)
-            // Hum Bitmap ke size ke mutabiq page create karenge
+            // Pages create karein... (Aapka purana logic yahan rahega)
             val frontPageInfo = PdfDocument.PageInfo.Builder(frontBitmap.width, frontBitmap.height, 1).create()
             val frontPage = pdfDocument.startPage(frontPageInfo)
             frontPage.canvas.drawBitmap(frontBitmap, 0f, 0f, paint)
             pdfDocument.finishPage(frontPage)
 
-            // 3. Back Plate Page (Page 2)
             val backPageInfo = PdfDocument.PageInfo.Builder(backBitmap.width, backBitmap.height, 2).create()
             val backPage = pdfDocument.startPage(backPageInfo)
             backPage.canvas.drawBitmap(backBitmap, 0f, 0f, paint)
             pdfDocument.finishPage(backPage)
 
-            // 4. MediaStore ke zariye save karein (Scoped Storage)
             val contentValues = ContentValues().apply {
                 put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
                 put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
                 put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/NumberPlateMaker")
+                put(MediaStore.MediaColumns.IS_PENDING, 1) // Ye line add karein
             }
 
             val resolver = context.contentResolver
@@ -106,15 +108,34 @@ actual class PlatformExportHelper(private val context: Context) {
                 resolver.openOutputStream(it)?.use { outputStream ->
                     pdfDocument.writeTo(outputStream)
                 }
+
+                // IS_PENDING hata dein
+                contentValues.clear()
+                contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
+                resolver.update(it, contentValues, null, null)
+
+                pdfDocument.close()
+                frontBitmap.recycle()
+                backBitmap.recycle()
+
+                return@withContext it.toString() // Yahan URI return karein, Success message nahi
             }
 
             pdfDocument.close()
-            frontBitmap.recycle()
-            backBitmap.recycle()
-
-            "Success: PDF saved to Documents"
+            throw Exception("Failed to save PDF")
         } catch (e: Exception) {
             "Error: ${e.message}"
+        }
+    }
+    private fun saveToAppDirectory(data: ByteArray, fileName: String): String? {
+        return try {
+            val dir = java.io.File(context.filesDir, "plate_thumbnails")
+            if (!dir.exists()) dir.mkdirs()
+            val file = java.io.File(dir, "$fileName.png")
+            file.outputStream().use { it.write(data) }
+            file.absolutePath
+        } catch (e: Exception) {
+            null
         }
     }
 }

@@ -2,6 +2,7 @@ package com.webscare.numberplatemaker.ui.editor
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,11 +35,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.webscare.numberplatemaker.domain.models.VehicleType
+import com.webscare.numberplatemaker.ui.PlateViewModel
 import com.webscare.numberplatemaker.ui.editor.components.EditorStepTopAppBar
 import com.webscare.numberplatemaker.ui.theme.PlateColors
 import com.webscare.numberplatemaker.util.addPressEffect
 import numberplatemaker.composeapp.generated.resources.Res
+import numberplatemaker.composeapp.generated.resources.ic_commercial
+import numberplatemaker.composeapp.generated.resources.ic_gov
 import numberplatemaker.composeapp.generated.resources.ic_motorcycle
+import numberplatemaker.composeapp.generated.resources.ic_private_car
+import numberplatemaker.composeapp.generated.resources.ic_riksha
 import org.jetbrains.compose.resources.painterResource
 
 private data class VehicleUiModel(
@@ -49,16 +58,18 @@ private data class VehicleUiModel(
 @Composable
 fun VehicleTypeScreen(
     onBackClick: () -> Unit,
+    viewModel: PlateViewModel,
     onVehicleTypeSelected: (VehicleType) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val uiState by viewModel.uiState.collectAsState()
     val vehicleUiItems = remember {
         listOf(
             VehicleUiModel(
                 VehicleType.PRIVATE_CAR,
                 "Private Car",
                 "Personal vehicles",
-                Res.drawable.ic_motorcycle,
+                Res.drawable.ic_private_car,
                 Color(0xFFF8FAFC)
             ),
             VehicleUiModel(
@@ -72,39 +83,46 @@ fun VehicleTypeScreen(
                 VehicleType.COMMERCIAL,
                 "Commercial",
                 "Goods & passenger services",
-                Res.drawable.ic_motorcycle,
+                Res.drawable.ic_commercial,
                 Color(0xFFFFCC00)
             ),
             VehicleUiModel(
                 VehicleType.GOVERNMENT,
                 "Government",
                 "Federal / provincial fleet",
-                Res.drawable.ic_motorcycle,
+                Res.drawable.ic_gov,
                 Color(0xFF0C8A53)
             ),
             VehicleUiModel(
                 VehicleType.HEAVY_TRANSPORT,
                 "Heavy Transport",
                 "Trucks & trailers",
-                Res.drawable.ic_motorcycle,
+                Res.drawable.ic_commercial,
                 Color(0xFFFFCC00)
             ),
             VehicleUiModel(
                 VehicleType.RICKSHAW,
                 "Rickshaw",
                 "3-wheeler auto",
-                Res.drawable.ic_motorcycle,
+                Res.drawable.ic_riksha,
                 Color(0xFFFFCC00)
             ),
             VehicleUiModel(
                 VehicleType.DIPLOMATIC,
                 "Diplomatic",
                 "Embassy / consular",
-                Res.drawable.ic_motorcycle,
+                Res.drawable.ic_private_car,
                 Color(0xFFD32F2F)
             ),
             VehicleUiModel(
                 VehicleType.ELECTRIC_CAR,
+                "Electric Car",
+                "EV passenger car",
+                Res.drawable.ic_private_car,
+                Color(0xFF00C853)
+            ),
+            VehicleUiModel(
+                VehicleType.ELECTRIC_BIKE,
                 "Electric Car",
                 "EV passenger car",
                 Res.drawable.ic_motorcycle,
@@ -163,7 +181,9 @@ fun VehicleTypeScreen(
                         vehicleUiItems.forEach { plateItem ->
                             VehicleTypeCard(
                                 uiModel = plateItem,
-                                onCardClick = { onVehicleTypeSelected(plateItem.type) }
+                                onCardClick = { onVehicleTypeSelected(plateItem.type) },
+                                isSelected = uiState.selectedVehicle == plateItem.type,
+                                viewModel = viewModel
                             )
                         }
                     }
@@ -176,14 +196,26 @@ fun VehicleTypeScreen(
 
 @Composable
 private fun VehicleTypeCard(
+    viewModel: PlateViewModel,
     uiModel: VehicleUiModel,
     onCardClick: () -> Unit,
+    isSelected: Boolean,
     modifier: Modifier = Modifier
 ) {
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.clearRegistrationFields()
+        }
+    }
     Row(
         modifier = modifier
             .fillMaxWidth()
             .addPressEffect { onCardClick() }
+            .border(
+                width = if (isSelected) 2.dp else 0.dp,
+                color = if (isSelected) Color(0xFF0C8A53) else Color.Transparent,
+                shape = RoundedCornerShape(16.dp)
+            )
             .background(Color.White, shape = RoundedCornerShape(16.dp))
             .clip(RoundedCornerShape(16.dp))
             .padding(horizontal = 16.dp, vertical = 16.dp),

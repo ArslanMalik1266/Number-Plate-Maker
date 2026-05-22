@@ -109,7 +109,7 @@ object StyleResolver {
             VehicleType.COMMERCIAL -> 0xFFFFD700L to 0xFF1A1A1AL // Yellow background, Black text
             VehicleType.GOVERNMENT -> 0xFF004B23 to 0xFFFFFFFFL // Green background, White text
             VehicleType.RICKSHAW -> 0xFFFFD700L to 0xFF1A1A1AL
-            VehicleType.ELECTRIC_BIKE, VehicleType.ELECTRIC_CAR -> 0xFF0A4624 to 0xFFFFFFFFL
+            VehicleType.ELECTRIC_BIKE, VehicleType.ELECTRIC_CAR -> 0xFF00B140L to 0xFFFFFFFFL
             else -> 0xFFFFFFFFL to 0xFF1A1A1AL // Default White background, Black text
         }
         return when (vehicle) {
@@ -173,7 +173,7 @@ object StyleResolver {
             VehicleType.COMMERCIAL -> 0xFFFFD700L to 0xFF1A1A1AL // Yellow background, Black text
             VehicleType.GOVERNMENT -> 0xFF004B23 to 0xFFFFFFFFL // Green background, White text
             VehicleType.RICKSHAW -> 0xFFFFD700L to 0xFF1A1A1AL
-            VehicleType.ELECTRIC_BIKE, VehicleType.ELECTRIC_CAR -> 0xFF0A4624 to 0xFFFFFFFFL
+            VehicleType.ELECTRIC_BIKE, VehicleType.ELECTRIC_CAR -> 0xFF00B140L to 0xFFFFFFFFL
             else -> 0xFFFFFFFFL to 0xFF1A1A1AL // Default White background, Black text
         }
         return when (vehicle) {
@@ -237,7 +237,7 @@ object StyleResolver {
             VehicleType.COMMERCIAL -> 0xFFFFD700L to 0xFF1A1A1AL // Yellow background, Black text
             VehicleType.GOVERNMENT -> 0xFF004B23 to 0xFFFFFFFFL // Green background, White text
             VehicleType.RICKSHAW -> 0xFFFFD700L to 0xFF1A1A1AL
-            VehicleType.ELECTRIC_BIKE, VehicleType.ELECTRIC_CAR -> 0xFF0A4624 to 0xFFFFFFFFL
+            VehicleType.ELECTRIC_BIKE, VehicleType.ELECTRIC_CAR -> 0xFF00B140L to 0xFFFFFFFFL
             else -> 0xFFFFFFFFL to 0xFF1A1A1AL // Default White background, Black text
         }
         return when (vehicle) {
@@ -293,7 +293,7 @@ object StyleResolver {
             VehicleType.COMMERCIAL -> 0xFFFFD700L to 0xFF1A1A1AL // Yellow background, Black text
             VehicleType.GOVERNMENT -> 0xFF004B23 to 0xFFFFFFFFL // Green background, White text
             VehicleType.RICKSHAW -> 0xFFFFD700L to 0xFF1A1A1AL
-            VehicleType.ELECTRIC_BIKE, VehicleType.ELECTRIC_CAR -> 0xFF0A4624 to 0xFFFFFFFFL
+            VehicleType.ELECTRIC_BIKE, VehicleType.ELECTRIC_CAR -> 0xFF00B140L to 0xFFFFFFFFL
             else -> 0xFFFFFFFFL to 0xFF1A1A1AL // Default White background, Black text
         }
         return when (vehicle) {
@@ -356,7 +356,7 @@ object StyleResolver {
             VehicleType.COMMERCIAL -> 0xFFFFD700L to 0xFF1A1A1AL // Yellow background, Black text
             VehicleType.GOVERNMENT -> 0xFF004B23 to 0xFFFFFFFFL // Green background, White text
             VehicleType.RICKSHAW -> 0xFFFFD700L to 0xFF1A1A1AL
-            VehicleType.ELECTRIC_BIKE, VehicleType.ELECTRIC_CAR -> 0xFF0A4624 to 0xFFFFFFFFL
+            VehicleType.ELECTRIC_BIKE, VehicleType.ELECTRIC_CAR -> 0xFF00B140L to 0xFFFFFFFFL
             else -> 0xFFFFFFFFL to 0xFF1A1A1AL // Default White background, Black text
         }
         return when (vehicle) {
@@ -413,7 +413,7 @@ object StyleResolver {
             VehicleType.COMMERCIAL -> 0xFFFFD700L to 0xFF1A1A1AL // Yellow background, Black text
             VehicleType.GOVERNMENT -> 0xFF004B23 to 0xFFFFFFFFL // Green background, White text
             VehicleType.RICKSHAW -> 0xFFFFD700L to 0xFF1A1A1AL
-            VehicleType.ELECTRIC_BIKE, VehicleType.ELECTRIC_CAR -> 0xFF0A4624 to 0xFFFFFFFFL
+            VehicleType.ELECTRIC_BIKE, VehicleType.ELECTRIC_CAR -> 0xFF00B140L to 0xFFFFFFFFL
             else -> 0xFFFFFFFFL to 0xFF1A1A1AL // Default White background, Black text
         }
         return when (vehicle) {

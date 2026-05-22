@@ -35,7 +35,7 @@ fun HistoryContent(
             .padding(horizontal = 16.dp)
     ) {
         Text(
-            text = "${historyList.size} plates · tap to view, swipe to delete",
+            text = "${historyList.size} plates · tap to view",
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
             color = PlateColors.SubtitleGray,

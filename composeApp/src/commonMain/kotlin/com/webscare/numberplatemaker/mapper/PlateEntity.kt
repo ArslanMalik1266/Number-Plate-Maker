@@ -10,7 +10,9 @@ fun PlateEntity.toDomain(): RecentPlateItem {
         category = this.vehicleType,
         province = this.province,
         timestamp = this.issuedDate,
-        plateImageRes = this.frontImagePath
+        plateImageRes = this.frontImagePath,
+        plateImageBackRes = this.backImagePath,
+        pdfPath = this.pdfFilePath?.ifEmpty { null }
     )
 }
 
@@ -23,8 +25,8 @@ fun RecentPlateItem.toEntity(): PlateEntity {
         province = this.province,
         issuedDate = this.timestamp,
         frontImagePath = this.plateImageRes ?: "",
-        backImagePath = "",
-        pdfFilePath = "",
-        exportFormat = "PNG"
+        backImagePath = this.plateImageBackRes ?: "",
+        pdfFilePath = this.pdfPath ?: "",
+        exportFormat = if (!this.pdfPath.isNullOrEmpty()) "PDF" else "PNG"
     )
 }

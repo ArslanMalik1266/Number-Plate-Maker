@@ -12,6 +12,7 @@ import com.webscare.numberplatemaker.domain.models.PlateStep
 import com.webscare.numberplatemaker.domain.models.PlateUiState
 import com.webscare.numberplatemaker.domain.models.Province
 import com.webscare.numberplatemaker.domain.models.RecentPlateItem
+import com.webscare.numberplatemaker.domain.models.SettingsUiState
 import com.webscare.numberplatemaker.domain.models.VehicleType
 import com.webscare.numberplatemaker.domain.usecases.DeleteAllPlatesUseCase
 import com.webscare.numberplatemaker.domain.usecases.DeletePlateUseCase
@@ -20,7 +21,9 @@ import com.webscare.numberplatemaker.domain.usecases.ExportPlateUseCase
 import com.webscare.numberplatemaker.domain.usecases.GetPlateConfigUseCase
 import com.webscare.numberplatemaker.domain.usecases.GetPlateInputConfigUseCase
 import com.webscare.numberplatemaker.domain.usecases.GetPlatesUseCase
+import com.webscare.numberplatemaker.domain.usecases.GetThemeSettingsUseCase
 import com.webscare.numberplatemaker.domain.usecases.SavePlateUseCase
+import com.webscare.numberplatemaker.domain.usecases.ToggleThemeUseCase
 import com.webscare.numberplatemaker.mapper.toDomain
 import com.webscare.numberplatemaker.mapper.toEntity
 import com.webscare.numberplatemaker.util.ExportResult
@@ -41,10 +44,14 @@ class PlateViewModel(
     private val getPlatesUseCase: GetPlatesUseCase,
     private val savePlateUseCase: SavePlateUseCase,
     private val deletePlateUseCase: DeletePlateUseCase,
-    private val deleteAllPlatesUseCase: DeleteAllPlatesUseCase
+    private val deleteAllPlatesUseCase: DeleteAllPlatesUseCase,
+    private val toggleThemeUseCase: ToggleThemeUseCase,
+    private val getThemeSettingsUseCase: GetThemeSettingsUseCase
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PlateUiState())
     val uiState: StateFlow<PlateUiState> = _uiState.asStateFlow()
+    private val _settingsState = MutableStateFlow(SettingsUiState())
+    val settingsState = _settingsState.asStateFlow()
     private val currentConfig: PlateInputConfig?
         get() {
             val province = _uiState.value.selectedProvince ?: return null
@@ -68,6 +75,7 @@ class PlateViewModel(
         }
     }
 
+
     // 4. Sab kuch clear karne ke liye
     fun clearAllPlates() {
         viewModelScope.launch {
@@ -75,11 +83,32 @@ class PlateViewModel(
         }
     }
 
+    fun onThemeSelected(index: Int) {
+        viewModelScope.launch {
+            toggleThemeUseCase(index == 1)
+        }
+    }
+
     init {
         viewModelScope.launch {
             getPlatesUseCase().collect { entities ->
+                println("DEBUG_FETCH: Database se ${entities.size} plates mili hain")
+                entities.forEach { plate ->
+                    println("DEBUG_FETCH: Plate ID: ${plate.id}, Reg: ${plate.registrationNumber}, Front: ${plate.frontImagePath}")
+                }
                 val domainModels = entities.map { it.toDomain() }
                 _uiState.update { it.copy(savedPlates = domainModels) }
+                _settingsState.update { it.copy(savedCount = entities.size) }
+            }
+        }
+        viewModelScope.launch {
+            getThemeSettingsUseCase().collect { isDark ->
+                _settingsState.update {
+                    it.copy(
+                        isDarkMode = isDark,
+                        selectedThemeIndex = if (isDark) 1 else 0
+                    )
+                }
             }
         }
     }
@@ -208,54 +237,80 @@ class PlateViewModel(
 
     // PlateViewModel.kt mein:
 
-    @OptIn(ExperimentalTime::class)
     fun exportPlate(
         frontImageData: ByteArray,
         backImageData: ByteArray,
         format: ExportFormat
     ) {
         val timestamp = clock.getCurrentMillis()
+
         viewModelScope.launch {
-            _uiState.update { it.copy(exporting = true) }
+            // 1. Loading start karein
+            _uiState.update { it.copy(exporting = true, exportError = null) }
+
             try {
                 val currentState = _uiState.value
-                // 1. Export Action
+
+                // 2. Export call karein (Yeh Result<String> return karta hai)
                 val result = exportPlateUseCase(
                     frontImageData, backImageData, format,
                     currentState.registrationNumber,
                     currentState.selectedVehicle?.name ?: "VEHICLE"
                 )
 
-                when (result) {
-                    is ExportResult.Success -> {
-                        // 2. Persistence Action
+                // 3. Kotlin Result handling (Sahi tareeka)
+                result.onSuccess { combinedPaths ->
+                    val paths = combinedPaths.split("|")
+                    val frontPath = paths.getOrNull(0) ?: ""
+                    val backPath = paths.getOrNull(1) ?: ""
+
+                    if (format == ExportFormat.PDF) {
+                        // Thumbnails mil gayi (app directory se)
+                        // Ab actual PDF bhi save karo
+                        val pdfPath = exportPlateUseCase.savePdf(
+                            frontImageData, backImageData,
+                            currentState.registrationNumber,
+                            currentState.selectedVehicle?.name ?: "VEHICLE"
+                        )
                         val newPlate = RecentPlateItem(
                             id = timestamp.toString(),
                             plateNumber = currentState.registrationNumber,
                             category = currentState.selectedVehicle?.name ?: "Unknown",
                             province = currentState.selectedProvince?.name ?: "Unknown",
                             timestamp = timestamp,
-                            plateImageRes = result.filePath
+                            plateImageRes = frontPath,      // PNG thumbnail
+                            plateImageBackRes = backPath,   // PNG thumbnail
+                            pdfPath = pdfPath               // Actual PDF
                         )
                         savePlateUseCase(newPlate.toEntity())
+                    } else {
+                        val newPlate = RecentPlateItem(
+                            id = timestamp.toString(),
+                            plateNumber = currentState.registrationNumber,
+                            category = currentState.selectedVehicle?.name ?: "Unknown",
+                            province = currentState.selectedProvince?.name ?: "Unknown",
+                            timestamp = timestamp,
+                            plateImageRes = frontPath,
+                            plateImageBackRes = backPath,
+                            pdfPath = null
+                        )
+                        savePlateUseCase(newPlate.toEntity())
+                    }
 
-                        _uiState.update { it.copy(exporting = false, exportSuccess = true) }
-                    }
-                    is ExportResult.Error -> {
-                        _uiState.update { it.copy(exporting = false, exportError = result.message) }
-                    }
-                    else -> {}
+                    _uiState.update { it.copy(exporting = false, exportSuccess = true) }
+
+                }.onFailure { error ->
+                    _uiState.update { it.copy(exporting = false, exportError = error.message) }
                 }
+
             } catch (e: Exception) {
+                println("DEBUGSavePlate: CRITICAL EXCEPTION: ${e.message}")
                 _uiState.update { it.copy(exporting = false, exportError = e.message) }
             }
         }
     }
 
 
-    fun resetExportState() {
-        _uiState.update { it.copy(exportSuccess = false, exportError = null) }
-    }
     fun navigateBack() {
         val currentState = _uiState.value
         val previousStep = when (currentState.currentStep) {
@@ -268,8 +323,14 @@ class PlateViewModel(
             is PlateStep.Preview -> PlateStep.InputNumber
             else -> PlateStep.VehicleSelection
         }
-        _uiState.update { it.copy(currentStep = previousStep) }
-    }
+        val shouldClearPlates = currentState.currentStep is PlateStep.Preview
+        _uiState.update {
+            it.copy(
+                currentStep = previousStep,
+                frontPlate = if (shouldClearPlates) null else it.frontPlate,
+                backPlate = if (shouldClearPlates) null else it.backPlate
+            )
+        }    }
     fun resetFlow() {
         _uiState.value = PlateUiState()
     }
@@ -285,6 +346,46 @@ class PlateViewModel(
         val config = currentConfig ?: return
         _uiState.update {
             it.copy(numberInput = enforcePlateInputUseCase.enforceNumbers(raw, config))
+        }
+    }
+    fun resetExportState() {
+        _uiState.update {
+            it.copy(
+                exportSuccess = false,
+                exportError = null,
+
+            )
+        }
+    }
+    fun clearRegistrationFields() {
+        _uiState.update {
+            it.copy(
+                registrationNumber = "",
+                letterInput = "",
+                numberInput = ""
+            )
+        }
+    }
+    fun getStats(): Triple<Int, Int, Int> {
+        val plates = _uiState.value.savedPlates
+        val total = plates.size
+        val provinces = plates.map { it.province }.distinct().size
+        val oneWeekAgo = clock.getCurrentMillis() - (7 * 24 * 60 * 60 * 1000L)
+        val thisWeek = plates.count { it.timestamp >= oneWeekAgo }
+        return Triple(total, provinces, thisWeek)
+    }
+    fun loadPlateConfig(plateId: String) {
+        val plate = _uiState.value.savedPlates.find { it.id == plateId } ?: return
+        val previewData = getPlateConfigUseCase(
+            vehicleType = VehicleType.valueOf(plate.category),
+            province = Province.valueOf(plate.province),
+            regNumber = plate.plateNumber
+        )
+        _uiState.update {
+            it.copy(
+                frontPlate = PlateModel(PlateSide.FRONT, previewData.frontPlate),
+                backPlate = PlateModel(PlateSide.BACK, previewData.backPlate)
+            )
         }
     }
 

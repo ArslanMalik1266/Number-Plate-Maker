@@ -32,6 +32,7 @@ fun EditorStepTopAppBar(
     currentStep: Int,
     totalSteps: Int,
     onBackClick: () -> Unit,
+    showSteps: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
@@ -64,13 +65,15 @@ fun EditorStepTopAppBar(
                 }
             },
             actions = {
-                Text(
-                    text = "$currentStep/$totalSteps",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = PlateColors.SubtitleGray.copy(alpha = 0.8f),
-                    modifier = Modifier.padding(end = 20.dp)
-                )
+                if (showSteps) {
+                    Text(
+                        text = "$currentStep/$totalSteps",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = PlateColors.SubtitleGray.copy(alpha = 0.8f),
+                        modifier = Modifier.padding(end = 20.dp)
+                    )
+                }
             },
             colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                 containerColor = PlateColors.AppBackground

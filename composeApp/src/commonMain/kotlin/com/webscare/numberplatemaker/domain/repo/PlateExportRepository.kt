@@ -10,4 +10,11 @@ interface PlateExportRepository {
         registrationNumber: String,
         vehicleType: String
     ): Result<String>
+
+    suspend fun savePdf(
+        frontImageData: ByteArray,
+        backImageData: ByteArray,
+        registrationNumber: String,
+        vehicleType: String
+    ): String
 }

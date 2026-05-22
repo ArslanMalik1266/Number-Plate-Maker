@@ -54,6 +54,11 @@ kotlin {
             implementation(libs.androidx.navigation.compose)
             implementation(libs.androidx.room.runtime)
             implementation(libs.sqlite.bundled)
+            implementation(libs.coil.compose)
+            implementation(libs.coil.compose.core)
+            implementation(libs.coil.network.okhttp)
+            implementation(libs.androidx.datastore.preferences)
+
 
 
 

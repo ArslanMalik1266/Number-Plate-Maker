@@ -19,4 +19,16 @@ class ExportPlateUseCase(
         registrationNumber = registrationNumber,
         vehicleType = vehicleType
     )
+    // Add karo
+    suspend fun savePdf(
+        frontImageData: ByteArray,
+        backImageData: ByteArray,
+        registrationNumber: String,
+        vehicleType: String
+    ): String = repository.savePdf(
+        frontImageData = frontImageData,
+        backImageData = backImageData,
+        registrationNumber = registrationNumber,
+        vehicleType = vehicleType
+    )
 }
