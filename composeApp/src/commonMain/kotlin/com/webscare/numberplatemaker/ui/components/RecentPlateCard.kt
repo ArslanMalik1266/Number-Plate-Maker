@@ -19,6 +19,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import coil3.toUri
 
 import com.webscare.numberplatemaker.domain.models.RecentPlateItem
 import com.webscare.numberplatemaker.ui.theme.redColor
@@ -42,6 +44,9 @@ fun RecentPlateCard(
     modifier: Modifier = Modifier,
     onDeleteClick: (() -> Unit)? = null
 ) {
+    LaunchedEffect(item.plateImageRes) {
+        println("DEBUG_PATH: Path provided is ${item.plateImageRes}")
+    }
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -54,7 +59,9 @@ fun RecentPlateCard(
             model = item.plateImageRes,
             contentDescription = "Plate Image",
             modifier = Modifier.size(60.dp),
-            contentScale = ContentScale.Fit
+            contentScale = ContentScale.Fit,
+
+
         )
         Spacer(modifier = Modifier.width(16.dp))
         Column(

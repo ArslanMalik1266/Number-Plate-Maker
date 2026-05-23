@@ -17,4 +17,6 @@ interface PlateExportRepository {
         registrationNumber: String,
         vehicleType: String
     ): String
+
+    suspend fun savePlateFile(bitmapData: ByteArray, fileName: String): String
 }

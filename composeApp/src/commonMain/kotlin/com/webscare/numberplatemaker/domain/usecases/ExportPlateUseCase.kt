@@ -31,4 +31,9 @@ class ExportPlateUseCase(
         registrationNumber = registrationNumber,
         vehicleType = vehicleType
     )
+    suspend fun savePlateLocally(
+        bitmapData: ByteArray,
+        fileName: String
+    ): String = repository.savePlateFile(bitmapData, fileName)
+
 }

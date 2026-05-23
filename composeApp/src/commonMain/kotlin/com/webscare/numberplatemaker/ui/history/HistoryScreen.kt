@@ -5,6 +5,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -23,13 +24,19 @@ fun HistoryScreen(
 ){
     val uiState by viewModel.uiState.collectAsState()
     var showDeleteSheet by remember { mutableStateOf(false) }
+    var itemToDelete by remember { mutableStateOf<RecentPlateItem?>(null) }
+    var isSelectionMode by remember { mutableStateOf(false) }
+    val selectedItems = remember { mutableStateListOf<String>() }
+
 
     Scaffold(
         modifier = modifier,
         topBar = {
             HistoryTopAppBar(
                 onBackClick = onBackClick,
-                onClearAllClick = { showDeleteSheet = true } // ViewModel se clear logic
+                onClearAllClick = {
+                    itemToDelete = null
+                    showDeleteSheet = true}
             )
         }
     ) { innerPadding ->
@@ -37,17 +44,22 @@ fun HistoryScreen(
             historyList = uiState.savedPlates,
             onPlateItemClick = onPlateItemClick,
             onDeleteItemClick = { targetedItem ->
-                viewModel.deletePlate(targetedItem.toEntity())
-            },
+                itemToDelete = targetedItem // Specific item set karein
+                showDeleteSheet = true          },
             modifier = Modifier.padding(innerPadding)
         )
         if (showDeleteSheet) {
             DeleteAllConfirmationSheet(
-                plateCount = uiState.savedPlates.size,
+                plateCount = if (itemToDelete == null) uiState.savedPlates.size else 1,
                 onDismiss = { showDeleteSheet = false },
                 onConfirm = {
-                    viewModel.clearAllPlates()
+                    if (itemToDelete == null) {
+                        viewModel.clearAllPlates()
+                    } else {
+                        viewModel.deletePlate(itemToDelete!!.toEntity())
+                    }
                     showDeleteSheet = false
+                    itemToDelete = null
                 }
             )
         }

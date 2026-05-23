@@ -3,6 +3,7 @@ package com.webscare.numberplatemaker.data.repository
 import com.webscare.numberplatemaker.domain.models.ExportFormat
 import com.webscare.numberplatemaker.domain.repo.PlateExportRepository
 import com.webscare.numberplatemaker.util.PlatformExportHelper
+import com.webscare.numberplatemaker.util.saveBitmapToInternalStorage
 
 class PlateExportRepositoryImpl(
     private val helper: PlatformExportHelper
@@ -35,5 +36,8 @@ class PlateExportRepositoryImpl(
             registrationNumber = registrationNumber,
             vehicleType = vehicleType
         )
+    }
+    override suspend fun savePlateFile(bitmapData: ByteArray, fileName: String): String {
+        return saveBitmapToInternalStorage(bitmapData, fileName)
     }
 }

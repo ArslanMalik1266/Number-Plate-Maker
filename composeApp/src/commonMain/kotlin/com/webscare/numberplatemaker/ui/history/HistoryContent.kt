@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -23,12 +24,14 @@ import com.webscare.numberplatemaker.ui.components.RecentPlateCard
 import com.webscare.numberplatemaker.ui.theme.PlateColors
 import com.webscare.numberplatemaker.ui.theme.appBackground
 import com.webscare.numberplatemaker.ui.theme.subtitleGray
+import com.webscare.numberplatemaker.util.addPressEffect
 
 @Composable
 fun HistoryContent(
     historyList: List<RecentPlateItem>,
     onPlateItemClick: (RecentPlateItem) -> Unit,
     onDeleteItemClick: (RecentPlateItem) -> Unit,
+    isSelectionMode: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -37,13 +40,29 @@ fun HistoryContent(
             .background(MaterialTheme.colorScheme.appBackground)
             .padding(horizontal = 16.dp)
     ) {
-        Text(
-            text = "${historyList.size} plates · tap to view",
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.subtitleGray,
-            modifier = Modifier.padding(vertical = 12.dp)
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp, horizontal = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "${historyList.size} plates · tap to view",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.subtitleGray
+            )
+
+            // Right-aligned Select Button
+            Text(
+                text = if (isSelectionMode) "Delete" else "Select",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.addPressEffect() { }
+            )
+        }
 
         if (historyList.isEmpty()) {
             Box(

@@ -71,7 +71,7 @@ fun PkPlateTopAppBar(
                         lineHeight = 18.sp
                     )
                     Text(
-                        text = "Generator",
+                        text = "Pakistan number plates",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.subtitleGray,

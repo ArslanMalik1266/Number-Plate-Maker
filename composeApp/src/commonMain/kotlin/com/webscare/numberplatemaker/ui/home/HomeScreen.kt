@@ -99,7 +99,7 @@ fun HomeScreen(
             // 1. Header Section
             item {
                 Text(
-                    text = "Salaam — design your plate",
+                    text = "Build your plate",
                     fontSize = 32.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.softBlack,
@@ -107,7 +107,7 @@ fun HomeScreen(
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "Pick a vehicle type and province. Front and back plates ready in seconds.",
+                    text = "Pick a vehicle and province. Front and back, ready in seconds.",
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.subtitleGray
                 )
@@ -146,6 +146,7 @@ fun HomeScreen(
                     RecentPlateCard(
                         item = plateItem,
                         onItemClick = onPlateItemClick,
+
                     )
                 }
             }
@@ -188,7 +189,7 @@ fun GeneratePlateCard(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "NEW PLATE",
+                    text = "START HERE",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White.copy(alpha = 0.8f),
@@ -198,7 +199,7 @@ fun GeneratePlateCard(
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = "Generate a number\nplate",
+                    text = "Generate a plate",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White,

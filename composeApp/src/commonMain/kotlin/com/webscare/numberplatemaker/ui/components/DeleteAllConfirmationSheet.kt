@@ -39,6 +39,12 @@ fun DeleteAllConfirmationSheet(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
+    val isSingle = plateCount == 1
+    val title = if (isSingle) "Delete this plate?" else "Delete all recents?"
+    val subtitle = if (isSingle)
+        "This saved plate will be removed. This can't be undone."
+    else "All $plateCount saved plates will be removed. This can't be undone."
+    val buttonText = if (isSingle) "Delete" else "Delete all"
     val sheetState = rememberModalBottomSheetState()
 
     ModalBottomSheet(
@@ -73,7 +79,7 @@ fun DeleteAllConfirmationSheet(
 
             // Title
             Text(
-                text = "Delete all recents?",
+                text = title,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onBackground
@@ -83,7 +89,7 @@ fun DeleteAllConfirmationSheet(
 
             // Subtitle
             Text(
-                text = "All $plateCount saved plates will be removed. This can't be undone.",
+                text = subtitle,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
                 color = Color.Gray,
@@ -120,7 +126,7 @@ fun DeleteAllConfirmationSheet(
                         contentColor = Color.White
                     )
                 ) {
-                    Text("Delete all", fontWeight = FontWeight.Bold)
+                    Text(buttonText, fontWeight = FontWeight.Bold)
                 }
             }
         }
