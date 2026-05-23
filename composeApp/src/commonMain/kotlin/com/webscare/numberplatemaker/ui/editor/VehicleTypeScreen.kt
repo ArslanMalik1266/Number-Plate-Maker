@@ -117,14 +117,14 @@ fun VehicleTypeScreen(
             VehicleUiModel(
                 VehicleType.ELECTRIC_CAR,
                 "Electric Car",
-                "EV passenger car",
+                "EV car",
                 Res.drawable.ic_private_car,
                 Color(0xFF00C853)
             ),
             VehicleUiModel(
                 VehicleType.ELECTRIC_BIKE,
-                "Electric Car",
-                "EV passenger car",
+                "Electric Bike",
+                "EV Bike",
                 Res.drawable.ic_motorcycle,
                 Color(0xFF00C853)
             )

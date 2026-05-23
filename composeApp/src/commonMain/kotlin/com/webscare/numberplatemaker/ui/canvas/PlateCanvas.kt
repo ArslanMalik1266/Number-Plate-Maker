@@ -1257,6 +1257,7 @@ private fun DrawScope.drawKpkBikeFront(
     var regText = textMeasurer.measure(
         text = customRegString, style = TextStyle(
             fontSize = regFontSize,
+            color = textColor,
             fontFamily = registrationFont,
             platformStyle = PlatePlatformTextStyle,
             lineHeightStyle = LineHeightStyle(
@@ -1613,6 +1614,7 @@ private fun DrawScope.drawBalochistanBikeFront(
         text = customRegString, style = TextStyle(
             fontSize = regFontSize,
             fontFamily = registrationFont,
+            color = textColor,
             platformStyle = PlatePlatformTextStyle,
             lineHeightStyle = LineHeightStyle(
                 alignment = LineHeightStyle.Alignment.Center, trim = LineHeightStyle.Trim.Both
@@ -1912,8 +1914,9 @@ private fun DrawScope.drawSindhBikeFront(
 ) {
     val textColor = Color(config.textColor)
     val stripWidth = w * 0.17f
-    val borderThickness = w * 0.01f
-    val cornerRadius = h * 0.10f
+    val borderThickness = 4.dp.toPx()
+    val cornerRadius = 14.dp.toPx()
+
     val contentLeftEdge = stripWidth
     val availableWidth = w - contentLeftEdge
     val horizontalPadding = availableWidth * 0.08f
@@ -2067,8 +2070,9 @@ private fun DrawScope.drawSindhBikeRear(
     val leftMargin = w * 0.06f
     val textColor = Color(config.textColor)
     val stripWidth = w * 0.17f
-    val borderThickness = w * 0.01f
-    val cornerRadius = h * 0.04f
+    val borderThickness = 4.dp.toPx()
+    val cornerRadius = 14.dp.toPx()
+
 
     // --- 1. VERTICAL STRIP PATH ---
     val roundedPath = Path().apply {
@@ -2193,8 +2197,8 @@ private fun DrawScope.drawSindhCarPlate(
     val textColor = Color(config.textColor)
     val horizontalPadding = w * 0.08f
     val ajrakHeight = h * 0.25f
-    val borderThickness = w * 0.01f
-    val cornerRadius = h * 0.06f
+    val borderThickness = 4.dp.toPx()
+    val cornerRadius = 14.dp.toPx()
 
     val roundedPath = Path().apply {
         addRoundRect(
@@ -2804,8 +2808,8 @@ private fun DrawScope.drawGbBikeFront(
     val textColor = Color(config.textColor)
 
     // --- 0. PURPLE STRIP BG (Custom Corners & Border Safety) ---
-    val borderStrokeWidth = 10f // Aapke border ki thickness
-    val cornerRadiusValue = 25f // Plate ke corners ka radius
+    val borderStrokeWidth = 4.dp.toPx()// Aapke border ki thickness
+    val cornerRadiusValue = 13.dp.toPx()// Plate ke corners ka radius
     val stripWidth = w * 0.22f
     val purpleColor = Color(0xFF2129D1)
 
@@ -2903,8 +2907,8 @@ private fun DrawScope.drawGbBikeRear(
     logoPainter: androidx.compose.ui.graphics.painter.Painter
 ) {
     val textColor = Color(config.textColor)
-    val borderStrokeWidth = 10f // Border safety offset
-    val cornerRadiusValue = 25f // Plate corner radius
+    val borderStrokeWidth = 4.dp.toPx() // Border safety offset
+    val cornerRadiusValue = 13.dp.toPx() // Plate corner radius
 
     // --- 0. PURPLE STRIP BG (Left Side) ---
     val stripWidth = w * 0.22f
@@ -3018,11 +3022,11 @@ private fun DrawScope.drawGbCarPlate(
     logoPainter: androidx.compose.ui.graphics.painter.Painter
 ) {
     val textColor = Color(config.textColor)
-    val borderStrokeWidth = 10f
+    val borderStrokeWidth = 4.dp.toPx()
 
     // --- 0. STRIP AREA CALCULATIONS (25% of Plate) ---
     val totalStripAreaWidth = w * 0.22f
-    val leftRadius = 36f
+    val leftRadius = 13.dp.toPx()
 
     // 1. Draw Custom Rounded Blue Strip Background (Asymmetric Corners)
     val stripPath = Path().apply {
@@ -3165,11 +3169,12 @@ private fun DrawScope.drawIslamabadBikeFront(
     stripLogoPainter: androidx.compose.ui.graphics.painter.Painter
 ) {
     val textColor = Color(config.textColor)
-    val borderStrokeWidth = 10f
+    val borderStrokeWidth = 4.dp.toPx()
 
     // --- 0. STRIP AREA ---
     val totalStripAreaWidth = w * 0.22f
-    val leftRadius = 36f
+    val leftRadius =  13.dp.toPx()
+
 
     val stripPath = Path().apply {
         addRoundRect(
@@ -3312,11 +3317,11 @@ private fun DrawScope.drawIslamabadBikeRear(
     stripLogoPainter: androidx.compose.ui.graphics.painter.Painter
 ) {
     val textColor = Color(config.textColor)
-    val borderStrokeWidth = 10f
+    val borderStrokeWidth = 4.dp.toPx()
 
     // --- 0. STRIP AREA ---
     val totalStripAreaWidth = w * 0.22f
-    val leftRadius = 36f
+    val leftRadius = 13.dp.toPx()
 
     val stripPath = Path().apply {
         addRoundRect(
@@ -3455,11 +3460,11 @@ private fun DrawScope.drawIslamabadCarPlate(
     stripLogoPainter: androidx.compose.ui.graphics.painter.Painter // Naya Logo parameter
 ) {
     val textColor = Color(config.textColor)
-    val borderStrokeWidth = 10f
+    val borderStrokeWidth = 4.dp.toPx()
 
     // --- 0. STRIP AREA ---
     val totalStripAreaWidth = w * 0.25f
-    val leftRadius = h * 0.05f
+    val leftRadius = 13.dp.toPx()
 
     val stripPath = Path().apply {
         addRoundRect(

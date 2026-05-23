@@ -65,7 +65,7 @@ fun SettingsScreenContent(
         }
         item { SectionHeader("ABOUT") }
         item {
-            InfoRowSettings(title = "App version", value = "1.2.0")
+            InfoRowSettings(title = "App version", value = "1.0")
         }
 
 
