@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,6 +38,9 @@ import com.webscare.numberplatemaker.domain.models.Province
 import com.webscare.numberplatemaker.ui.PlateViewModel
 import com.webscare.numberplatemaker.ui.editor.components.EditorStepTopAppBar
 import com.webscare.numberplatemaker.ui.theme.PlateColors
+import com.webscare.numberplatemaker.ui.theme.appBackground
+import com.webscare.numberplatemaker.ui.theme.softBlack
+import com.webscare.numberplatemaker.ui.theme.subtitleGray
 import com.webscare.numberplatemaker.util.addPressEffect
 import numberplatemaker.composeapp.generated.resources.Res
 import numberplatemaker.composeapp.generated.resources.ajk_logo
@@ -51,7 +56,8 @@ private data class ProvinceUiModel(
     val province: Province,
     val title: String,
     val description: String,
-    val iconRes: org.jetbrains.compose.resources.DrawableResource
+    val iconRes: org.jetbrains.compose.resources.DrawableResource,
+    val tintIcon: Boolean = true
 )
 
 @Composable
@@ -69,34 +75,39 @@ fun ProvinceSelectionScreen(
                 Province.PUNJAB,
                 "Punjab",
                 "Province of the five rivers",
-                Res.drawable.punjab_logo
+                Res.drawable.punjab_logo,
+                tintIcon = true
             ),
             ProvinceUiModel(
                 Province.SINDH,
                 "Sindh",
                 "Land of the Indus",
-                Res.drawable.islamabad_logo
+                Res.drawable.islamabad_logo,
+                tintIcon = true
             ),
             ProvinceUiModel(Province.KPK, "KPK", "Khyber Pakhtunkhwa", Res.drawable.kpk_logo),
             ProvinceUiModel(
                 Province.BALOCHISTAN,
                 "Balochistan",
                 "Land of mountains",
-                Res.drawable.balochistan_logo
+                Res.drawable.balochistan_logo,
+                tintIcon = true
             ),
             ProvinceUiModel(
                 Province.ISLAMABAD,
                 "Islamabad",
                 "Capital Territory",
-                Res.drawable.islamabad_logo
+                Res.drawable.islamabad_logo,
+                tintIcon = true
             ),
             ProvinceUiModel(
                 Province.AJK,
                 "AJK",
                 "Azad Jammu & Kashmir",
-                Res.drawable.ajk_logo
+                Res.drawable.ajk_logo,
+                tintIcon = true
             ),
-            ProvinceUiModel(Province.GB, "GB", "Gilgit-Baltistan", Res.drawable.gb_logo_black)
+            ProvinceUiModel(Province.GB, "GB", "Gilgit-Baltistan", Res.drawable.gb_logo_black,tintIcon = true)
         )
     }
     Scaffold(
@@ -113,20 +124,20 @@ fun ProvinceSelectionScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(PlateColors.AppBackground)
+                .background(MaterialTheme.colorScheme.appBackground)
                 .padding(horizontal = 24.dp, vertical = 16.dp)
         ) {
             Text(
                 text = "Select your region",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = PlateColors.SoftBlack
+                color = MaterialTheme.colorScheme.softBlack
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Registration laws vary by province.",
                 fontSize = 14.sp,
-                color = PlateColors.SubtitleGray
+                color = MaterialTheme.colorScheme.subtitleGray
             )
             Spacer(modifier = Modifier.height(24.dp))
             LazyColumn(
@@ -165,20 +176,24 @@ private fun ProvinceCard(
                 shape = RoundedCornerShape(16.dp)
             )
             .clip(RoundedCornerShape(16.dp))
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(16.dp),
+
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
                 .size(48.dp)
-                .background(PlateColors.AppBackground, RoundedCornerShape(12.dp)),
+                .background(MaterialTheme.colorScheme.appBackground, RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
         ) {
             Image(
                 painterResource(uiModel.iconRes),
                 contentDescription = null,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(24.dp),
+                colorFilter = if (uiModel.tintIcon) {
+                    ColorFilter.tint(MaterialTheme.colorScheme.onBackground)
+                } else null
             )
         }
 
@@ -188,9 +203,13 @@ private fun ProvinceCard(
             Text(
                 text = uiModel.title,
                 fontWeight = FontWeight.Bold,
-                color = PlateColors.SoftBlack
+                color = MaterialTheme.colorScheme.softBlack
             )
-            Text(text = uiModel.description, fontSize = 12.sp, color = PlateColors.SubtitleGray)
+            Text(
+                text = uiModel.description,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.subtitleGray
+            )
         }
         Icon(
             Icons.AutoMirrored.Filled.KeyboardArrowRight,

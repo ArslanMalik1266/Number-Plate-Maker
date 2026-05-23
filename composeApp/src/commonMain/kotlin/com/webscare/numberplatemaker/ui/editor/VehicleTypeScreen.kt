@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,6 +39,9 @@ import com.webscare.numberplatemaker.domain.models.VehicleType
 import com.webscare.numberplatemaker.ui.PlateViewModel
 import com.webscare.numberplatemaker.ui.editor.components.EditorStepTopAppBar
 import com.webscare.numberplatemaker.ui.theme.PlateColors
+import com.webscare.numberplatemaker.ui.theme.appBackground
+import com.webscare.numberplatemaker.ui.theme.softBlack
+import com.webscare.numberplatemaker.ui.theme.subtitleGray
 import com.webscare.numberplatemaker.util.addPressEffect
 import numberplatemaker.composeapp.generated.resources.Res
 import numberplatemaker.composeapp.generated.resources.ic_commercial
@@ -146,14 +150,14 @@ fun VehicleTypeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(PlateColors.AppBackground)
+                .background(MaterialTheme.colorScheme.appBackground)
                 .padding(horizontal = 24.dp, vertical = 16.dp)
         ) {
             Text(
                 text = "What are you registering?",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = PlateColors.SoftBlack,
+                color = MaterialTheme.colorScheme.softBlack,
                 lineHeight = 34.sp,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -162,7 +166,7 @@ fun VehicleTypeScreen(
                 text = "Vehicle category determines plate color and prefix.",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Normal,
-                color = PlateColors.SubtitleGray,
+                color = MaterialTheme.colorScheme.subtitleGray,
                 lineHeight = 20.sp,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -183,7 +187,6 @@ fun VehicleTypeScreen(
                                 uiModel = plateItem,
                                 onCardClick = { onVehicleTypeSelected(plateItem.type) },
                                 isSelected = uiState.selectedVehicle == plateItem.type,
-                                viewModel = viewModel
                             )
                         }
                     }
@@ -196,17 +199,12 @@ fun VehicleTypeScreen(
 
 @Composable
 private fun VehicleTypeCard(
-    viewModel: PlateViewModel,
     uiModel: VehicleUiModel,
     onCardClick: () -> Unit,
     isSelected: Boolean,
     modifier: Modifier = Modifier
 ) {
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.clearRegistrationFields()
-        }
-    }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -216,7 +214,7 @@ private fun VehicleTypeCard(
                 color = if (isSelected) Color(0xFF0C8A53) else Color.Transparent,
                 shape = RoundedCornerShape(16.dp)
             )
-            .background(Color.White, shape = RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(16.dp))
             .clip(RoundedCornerShape(16.dp))
             .padding(horizontal = 16.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -244,7 +242,7 @@ private fun VehicleTypeCard(
                 text = uiModel.title,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
-                color = PlateColors.SoftBlack,
+                color = MaterialTheme.colorScheme.softBlack,
                 lineHeight = 20.sp
             )
             Spacer(modifier = Modifier.height(2.dp))
@@ -252,7 +250,7 @@ private fun VehicleTypeCard(
                 text = uiModel.subtitle,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Normal,
-                color = PlateColors.SubtitleGray,
+                color = MaterialTheme.colorScheme.subtitleGray,
                 lineHeight = 16.sp
             )
         }
@@ -261,7 +259,7 @@ private fun VehicleTypeCard(
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = "Navigate Next",
-            tint = PlateColors.SubtitleGray.copy(alpha = 0.5f),
+            tint = MaterialTheme.colorScheme.subtitleGray.copy(alpha = 0.5f),
             modifier = Modifier.size(20.dp)
         )
     }

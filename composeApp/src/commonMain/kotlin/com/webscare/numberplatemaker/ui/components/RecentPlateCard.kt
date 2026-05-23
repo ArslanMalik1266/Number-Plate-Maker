@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -26,12 +27,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-//import coil3.compose.AsyncImage
-//import coil3.compose.LocalPlatformContext
-//import coil3.request.ImageRequest
-//import coil3.request.crossfade
+
 import com.webscare.numberplatemaker.domain.models.RecentPlateItem
-import com.webscare.numberplatemaker.ui.theme.PlateColors
+import com.webscare.numberplatemaker.ui.theme.redColor
+import com.webscare.numberplatemaker.ui.theme.softBlack
+import com.webscare.numberplatemaker.ui.theme.subtitleGray
 import com.webscare.numberplatemaker.util.addPressEffect
 import com.webscare.numberplatemaker.util.formatTimestamp
 
@@ -46,7 +46,7 @@ fun RecentPlateCard(
         modifier = modifier
             .fillMaxWidth()
             .addPressEffect { onItemClick(item) }
-            .background(color = Color.White, shape = RoundedCornerShape(16.dp))
+            .background(color = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(16.dp))
             .padding(all = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -65,14 +65,14 @@ fun RecentPlateCard(
                 text = item.category,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
-                color = PlateColors.SubtitleGray
+                color = MaterialTheme.colorScheme.subtitleGray
             )
 
             Text(
                 text = item.plateNumber,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = PlateColors.SoftBlack,
+                color = MaterialTheme.colorScheme.softBlack,
                 lineHeight = 20.sp
             )
 
@@ -86,18 +86,18 @@ fun RecentPlateCard(
                     text = item.province,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Normal,
-                    color = PlateColors.SubtitleGray
+                    color = MaterialTheme.colorScheme.subtitleGray
                 )
                 Text(
                     text = "·",
                     fontSize = 12.sp,
-                    color = PlateColors.SubtitleGray
+                    color = MaterialTheme.colorScheme.subtitleGray
                 )
                 Text(
                     text = formatTimestamp(item.timestamp),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Normal,
-                    color = PlateColors.SubtitleGray
+                    color = MaterialTheme.colorScheme.subtitleGray
                 )
             }
         }
@@ -115,7 +115,7 @@ fun RecentPlateCard(
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Delete item",
-                    tint = Color(0xFFD32F2F),
+                    tint = MaterialTheme.colorScheme.redColor,
                     modifier = Modifier.size(18.dp)
                 )
             }
@@ -123,7 +123,7 @@ fun RecentPlateCard(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = "Navigate details",
-                tint = PlateColors.SubtitleGray.copy(alpha = 0.7f),
+                tint = MaterialTheme.colorScheme.subtitleGray.copy(alpha = 0.7f),
                 modifier = Modifier.size(24.dp)
             )
         }

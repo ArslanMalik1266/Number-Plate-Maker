@@ -1,6 +1,7 @@
 package com.webscare.numberplatemaker.ui.navigation
 
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
@@ -14,12 +15,15 @@ import com.webscare.numberplatemaker.ui.editor.VehicleTypeScreen
 import com.webscare.numberplatemaker.ui.history.HistoryScreen
 import com.webscare.numberplatemaker.ui.home.HomeScreen
 import com.webscare.numberplatemaker.ui.settings.SettingsScreen
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 fun NavGraphBuilder.appNavigation(
     navController: NavController,
     viewModel: PlateViewModel
 ) {
     composable(Screen.Home.route) {
+        val scope = rememberCoroutineScope()
         HomeScreen(
             onNavigateToSettings = {
                 navController.navigate(Screen.Settings.route)
@@ -28,8 +32,10 @@ fun NavGraphBuilder.appNavigation(
                 navController.navigate(Screen.History.route)
             },
             onGeneratePlateClick = {
-                navController.navigate(Screen.VehicleType.route)
-            },
+                scope.launch(kotlinx.coroutines.Dispatchers.Main) {
+                    kotlinx.coroutines.delay(50)
+                    navController.navigate(Screen.VehicleType.route)
+                }            },
             onPlateItemClick = { plate ->
                 navController.navigate(Screen.Details.createRoute(plate.id))
             },
@@ -50,6 +56,7 @@ fun NavGraphBuilder.appNavigation(
         )
     }
     composable(Screen.VehicleType.route) {
+        val scope = rememberCoroutineScope()
         VehicleTypeScreen(
             onBackClick = {
                 if (navController.previousBackStackEntry != null) {
@@ -57,8 +64,12 @@ fun NavGraphBuilder.appNavigation(
                 }
             },
             onVehicleTypeSelected = { vehicleType ->
-                viewModel.onVehicleSelected(vehicleType)
-                navController.navigate(Screen.ProvinceSelection.route)
+                scope.launch {
+                    kotlinx.coroutines.delay(50)
+                    viewModel.clearRegistrationFields()
+                    viewModel.onVehicleSelected(vehicleType)
+                    navController.navigate(Screen.ProvinceSelection.route)
+                }
             },
             viewModel = viewModel
 
@@ -66,22 +77,31 @@ fun NavGraphBuilder.appNavigation(
         )
     }
     composable(Screen.ProvinceSelection.route) {
+        val scope = rememberCoroutineScope()
         ProvinceSelectionScreen(
             onBackClick = { navController.popBackStack() },
             onProvinceSelected = { province ->
-                viewModel.onProvinceSelected(province)
-                navController.navigate(Screen.Registration.route)
+                scope.launch {
+                    kotlinx.coroutines.delay(50)
+                    viewModel.onProvinceSelected(province)
+                    navController.navigate(Screen.Registration.route)
+                }
             },
             viewModel = viewModel
         )
     }
     composable(Screen.Registration.route) {
+        val scope = rememberCoroutineScope()
+
         RegistrationScreen(
             viewModel = viewModel,
             onBackClick = { navController.popBackStack() },
             onGenerateClick = { plateNumber ->
-                viewModel.generatePlatePreview(plateNumber) {
-                    navController.navigate(Screen.Preview.route)
+                scope.launch {
+                    kotlinx.coroutines.delay(50)
+                    viewModel.generatePlatePreview(plateNumber) {
+                        navController.navigate(Screen.Preview.route)
+                    }
                 }
             },
             registrationNumber = viewModel.uiState.value.registrationNumber,

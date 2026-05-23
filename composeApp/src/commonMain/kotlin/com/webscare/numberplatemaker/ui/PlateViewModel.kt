@@ -28,6 +28,7 @@ import com.webscare.numberplatemaker.mapper.toDomain
 import com.webscare.numberplatemaker.mapper.toEntity
 import com.webscare.numberplatemaker.util.ExportResult
 import com.webscare.numberplatemaker.util.PlatformClock
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -52,6 +53,8 @@ class PlateViewModel(
     val uiState: StateFlow<PlateUiState> = _uiState.asStateFlow()
     private val _settingsState = MutableStateFlow(SettingsUiState())
     val settingsState = _settingsState.asStateFlow()
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading = _isLoading.asStateFlow()
     private val currentConfig: PlateInputConfig?
         get() {
             val province = _uiState.value.selectedProvince ?: return null
@@ -91,6 +94,11 @@ class PlateViewModel(
 
     init {
         viewModelScope.launch {
+            delay(2000)
+            _isLoading.value = false
+        }
+
+        viewModelScope.launch {
             getPlatesUseCase().collect { entities ->
                 println("DEBUG_FETCH: Database se ${entities.size} plates mili hain")
                 entities.forEach { plate ->
@@ -111,24 +119,46 @@ class PlateViewModel(
                 }
             }
         }
+        val defaultVehicle = VehicleType.PRIVATE_CAR
+        val defaultProvince = Province.PUNJAB
+
+        // Initialize the state with these values
+        _uiState.update {
+            it.copy(
+                selectedVehicle = defaultVehicle,
+                selectedProvince = defaultProvince,
+                currentStep = PlateStep.InputNumber
+            )
+        }
     }
 
     // --- UI Events (User Actions) ---
 
-    fun onVehicleSelected(vehicle: VehicleType) {
-        val nextStep = if (vehicle == VehicleType.DIPLOMATIC) {
-            PlateStep.InputNumber
-        } else {
-            PlateStep.ProvinceSelection
-        }
+    fun setInitialSelections(vehicle: VehicleType, province: Province) {
         _uiState.update {
             it.copy(
                 selectedVehicle = vehicle,
-                currentStep = nextStep,
-                selectedProvince = if (vehicle == VehicleType.DIPLOMATIC) Province.ISLAMABAD else it.selectedProvince,
-                frontPlate = null,
-                backPlate = null
+                selectedProvince = province
             )
+        }
+    }
+    fun onVehicleSelected(vehicle: VehicleType) {
+        viewModelScope.launch {
+            val nextStep = if (vehicle == VehicleType.DIPLOMATIC) {
+                PlateStep.InputNumber
+            } else {
+                PlateStep.ProvinceSelection
+            }
+
+            _uiState.update {
+                it.copy(
+                    selectedVehicle = vehicle,
+                    currentStep = nextStep,
+                    selectedProvince = if (vehicle == VehicleType.DIPLOMATIC) Province.ISLAMABAD else it.selectedProvince,
+                    frontPlate = null,
+                    backPlate = null
+                )
+            }
         }
     }
     fun updatePreview(newNumber: String) {
@@ -145,16 +175,20 @@ class PlateViewModel(
     }
 
     fun onProvinceSelected(province: Province) {
-        val config = getPlateInputConfigUseCase(province, _uiState.value.selectedVehicle!!)
-        _uiState.update {
-            it.copy(
-                selectedProvince = province,
-                currentStep = PlateStep.InputNumber,
-                plateInputConfig = config,
-                formatHint = config.formatHint,
-                frontPlate = null,
-                backPlate = null
-            )
+        viewModelScope.launch { // Launch use karein
+            // Heavy logic background mein
+            val config = getPlateInputConfigUseCase(province, _uiState.value.selectedVehicle!!)
+
+            _uiState.update {
+                it.copy(
+                    selectedProvince = province,
+                    currentStep = PlateStep.InputNumber,
+                    plateInputConfig = config,
+                    formatHint = config.formatHint,
+                    frontPlate = null,
+                    backPlate = null
+                )
+            }
         }
     }
     fun onRegistrationNumberChanged(raw: String) {
@@ -211,27 +245,28 @@ class PlateViewModel(
         val currentState = _uiState.value
         val vehicle = currentState.selectedVehicle
         val province = currentState.selectedProvince
+        viewModelScope.launch {
+            if (vehicle != null && province != null && regNumber.isNotBlank()) {
+                _uiState.update { it.copy(loading = true) }
 
-        if (vehicle != null && province != null && regNumber.isNotBlank()) {
-            _uiState.update { it.copy(loading = true) }
-
-            val previewData = getPlateConfigUseCase(
-                vehicleType = vehicle,
-                province = province,
-                regNumber = regNumber
-            )
-
-            _uiState.update {
-                it.copy(
-                    registrationNumber = regNumber,
-                    frontPlate = PlateModel(PlateSide.FRONT, previewData.frontPlate),
-                    backPlate = PlateModel(PlateSide.BACK, previewData.backPlate),
-                    currentStep = PlateStep.Preview,
-                    loading = false
+                val previewData = getPlateConfigUseCase(
+                    vehicleType = vehicle,
+                    province = province,
+                    regNumber = regNumber
                 )
+
+                _uiState.update {
+                    it.copy(
+                        registrationNumber = regNumber,
+                        frontPlate = PlateModel(PlateSide.FRONT, previewData.frontPlate),
+                        backPlate = PlateModel(PlateSide.BACK, previewData.backPlate),
+                        currentStep = PlateStep.Preview,
+                        loading = false
+                    )
+                }
+                // Data update hone ke baad navigate karo
+                onComplete()
             }
-            // Data update hone ke baad navigate karo
-            onComplete()
         }
     }
 
@@ -331,23 +366,6 @@ class PlateViewModel(
                 backPlate = if (shouldClearPlates) null else it.backPlate
             )
         }    }
-    fun resetFlow() {
-        _uiState.value = PlateUiState()
-    }
-
-    fun onLetterInputChanged(raw: String) {
-        val config = currentConfig ?: return
-        _uiState.update {
-            it.copy(letterInput = enforcePlateInputUseCase.enforceLetters(raw, config))
-        }
-    }
-
-    fun onNumberInputChanged(raw: String) {
-        val config = currentConfig ?: return
-        _uiState.update {
-            it.copy(numberInput = enforcePlateInputUseCase.enforceNumbers(raw, config))
-        }
-    }
     fun resetExportState() {
         _uiState.update {
             it.copy(
@@ -374,17 +392,15 @@ class PlateViewModel(
         val thisWeek = plates.count { it.timestamp >= oneWeekAgo }
         return Triple(total, provinces, thisWeek)
     }
-    fun loadPlateConfig(plateId: String) {
-        val plate = _uiState.value.savedPlates.find { it.id == plateId } ?: return
-        val previewData = getPlateConfigUseCase(
-            vehicleType = VehicleType.valueOf(plate.category),
-            province = Province.valueOf(plate.province),
-            regNumber = plate.plateNumber
-        )
+    fun resetSelection() {
         _uiState.update {
             it.copy(
-                frontPlate = PlateModel(PlateSide.FRONT, previewData.frontPlate),
-                backPlate = PlateModel(PlateSide.BACK, previewData.backPlate)
+                selectedVehicle = null,
+                selectedProvince = null,
+                registrationNumber = "",
+                currentStep = PlateStep.VehicleSelection,
+                frontPlate = null,
+                backPlate = null
             )
         }
     }

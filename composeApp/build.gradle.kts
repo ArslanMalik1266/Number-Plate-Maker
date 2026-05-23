@@ -58,6 +58,7 @@ kotlin {
             implementation(libs.coil.compose.core)
             implementation(libs.coil.network.okhttp)
             implementation(libs.androidx.datastore.preferences)
+            implementation(libs.androidx.core.splashscreen)
 
 
 

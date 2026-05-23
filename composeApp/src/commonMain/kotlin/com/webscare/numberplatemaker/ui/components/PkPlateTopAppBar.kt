@@ -12,10 +12,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.webscare.numberplatemaker.ui.theme.PlateColors
+import com.webscare.numberplatemaker.ui.theme.appBackground
+import com.webscare.numberplatemaker.ui.theme.softBlack
+import com.webscare.numberplatemaker.ui.theme.subtitleGray
 import com.webscare.numberplatemaker.util.addPressEffect
 import org.jetbrains.compose.resources.painterResource
 import numberplatemaker.composeapp.generated.resources.Res
@@ -30,7 +34,7 @@ fun PkPlateTopAppBar(
     TopAppBar(
         modifier = modifier,
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = PlateColors.AppBackground
+            containerColor = MaterialTheme.colorScheme.appBackground
         ),
         title = {
             Row(
@@ -49,7 +53,7 @@ fun PkPlateTopAppBar(
                 ) {
                     Text(
                         text = "PK",
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.surface,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.ExtraBold
                     )
@@ -63,14 +67,14 @@ fun PkPlateTopAppBar(
                         text = "PK Plate",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = PlateColors.SoftBlack,
+                        color = MaterialTheme.colorScheme.softBlack,
                         lineHeight = 18.sp
                     )
                     Text(
                         text = "Generator",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
-                        color = PlateColors.SubtitleGray,
+                        color = MaterialTheme.colorScheme.subtitleGray,
                         lineHeight = 14.sp
                     )
                 }
@@ -85,7 +89,7 @@ fun PkPlateTopAppBar(
                         onSettingsClick()
                     }
                     .background(
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.surface,
                         shape = CircleShape
                     )
                     .clip(CircleShape)
@@ -95,7 +99,8 @@ fun PkPlateTopAppBar(
                 Image(
                     painter = painterResource(resource = Res.drawable.setting_icon),
                     contentDescription = "Settings",
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(22.dp),
+                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground)
                 )
             }
         }

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -20,6 +21,8 @@ import androidx.compose.ui.unit.sp
 import com.webscare.numberplatemaker.domain.models.RecentPlateItem
 import com.webscare.numberplatemaker.ui.components.RecentPlateCard
 import com.webscare.numberplatemaker.ui.theme.PlateColors
+import com.webscare.numberplatemaker.ui.theme.appBackground
+import com.webscare.numberplatemaker.ui.theme.subtitleGray
 
 @Composable
 fun HistoryContent(
@@ -31,14 +34,14 @@ fun HistoryContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(PlateColors.AppBackground)
+            .background(MaterialTheme.colorScheme.appBackground)
             .padding(horizontal = 16.dp)
     ) {
         Text(
             text = "${historyList.size} plates · tap to view",
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
-            color = PlateColors.SubtitleGray,
+            color = MaterialTheme.colorScheme.subtitleGray,
             modifier = Modifier.padding(vertical = 12.dp)
         )
 
@@ -47,7 +50,7 @@ fun HistoryContent(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "No history found", color = PlateColors.SubtitleGray)
+                Text(text = "No history found", color = MaterialTheme.colorScheme.subtitleGray)
             }
         } else {
             LazyColumn(

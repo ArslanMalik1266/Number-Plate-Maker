@@ -10,6 +10,7 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -21,6 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.webscare.numberplatemaker.ui.theme.PlateColors
+import com.webscare.numberplatemaker.ui.theme.appBackground
+import com.webscare.numberplatemaker.ui.theme.softBlack
 import com.webscare.numberplatemaker.util.addPressEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,7 +42,7 @@ fun HistoryTopAppBar(
                     text = "Recent plates",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = PlateColors.SoftBlack,
+                    color = MaterialTheme.colorScheme.softBlack,
                 )
             }
         },
@@ -48,7 +51,7 @@ fun HistoryTopAppBar(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
-                    tint = PlateColors.SoftBlack
+                    tint = MaterialTheme.colorScheme.softBlack
                 )
             }
         },
@@ -63,6 +66,6 @@ fun HistoryTopAppBar(
                     .addPressEffect { onClearAllClick() }
             )
         },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = PlateColors.AppBackground)
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.appBackground)
     )
 }

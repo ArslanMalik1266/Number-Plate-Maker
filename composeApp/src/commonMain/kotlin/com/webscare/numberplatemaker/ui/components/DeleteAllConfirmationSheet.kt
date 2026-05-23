@@ -19,6 +19,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -43,7 +44,7 @@ fun DeleteAllConfirmationSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.surface,
         dragHandle = { BottomSheetDefaults.DragHandle() }
     ) {
         Column(
@@ -75,7 +76,7 @@ fun DeleteAllConfirmationSheet(
                 text = "Delete all recents?",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = Color(0xFF1A1A1A)
+                color = MaterialTheme.colorScheme.onBackground
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -99,7 +100,7 @@ fun DeleteAllConfirmationSheet(
                 // Cancel Button
                 Button(
                     onClick = onDismiss,
-                    modifier = Modifier.weight(1f).height(56.dp),
+                    modifier = Modifier.weight(1f).height(46.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFF5F5F5),

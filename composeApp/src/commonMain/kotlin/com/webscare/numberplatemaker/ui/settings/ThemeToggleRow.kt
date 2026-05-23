@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,14 +33,14 @@ fun ThemeToggleRow(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp),
         shape = RoundedCornerShape(16.dp),
-        color = Color.White
+        color = MaterialTheme.colorScheme.surface
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = "Theme",
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
-                color = Color(0xFF1A1A1A),
+                color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 

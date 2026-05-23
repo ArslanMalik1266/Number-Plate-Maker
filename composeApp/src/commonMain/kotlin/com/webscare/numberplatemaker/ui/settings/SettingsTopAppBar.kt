@@ -15,6 +15,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.webscare.numberplatemaker.ui.theme.PlateColors
+import com.webscare.numberplatemaker.ui.theme.appBackground
+import com.webscare.numberplatemaker.ui.theme.softBlack
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,7 +32,7 @@ fun SettingsTopAppBar(
                     text = "Settings",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = PlateColors.SoftBlack,
+                    color = MaterialTheme.colorScheme.softBlack,
                 )
             }
         },
@@ -39,7 +41,7 @@ fun SettingsTopAppBar(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
-                    tint = PlateColors.SoftBlack
+                    tint = MaterialTheme.colorScheme.softBlack
                 )
             }
         },
@@ -47,7 +49,7 @@ fun SettingsTopAppBar(
             Spacer(modifier = Modifier.width(48.dp))
         },
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = PlateColors.AppBackground
+            containerColor = MaterialTheme.colorScheme.appBackground
         )
     )
 }

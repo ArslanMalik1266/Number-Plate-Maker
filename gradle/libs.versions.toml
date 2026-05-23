@@ -21,6 +21,7 @@ room = "2.7.1"
 ksp = "2.1.10-1.0.29"
 coil = "3.0.4"
 datastore = "1.1.1"
+androidx-core-splashscreen = "1.0.1"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -59,6 +60,7 @@ koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-compose-core = { module = "io.coil-kt.coil3:coil-compose-core", version.ref = "coil" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "androidx-core-splashscreen" }
 
 
 

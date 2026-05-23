@@ -3,6 +3,7 @@ package com.webscare.numberplatemaker.ui.settings
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -16,6 +17,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.webscare.numberplatemaker.ui.PlateViewModel
 import com.webscare.numberplatemaker.ui.components.DeleteAllConfirmationSheet
 import com.webscare.numberplatemaker.ui.theme.PlateColors
+import com.webscare.numberplatemaker.ui.theme.appBackground
 
 @Composable
 fun SettingsScreen(
@@ -28,7 +30,7 @@ fun SettingsScreen(
         topBar = {
             SettingsTopAppBar(onBackClick = onBackClick)
         },
-        containerColor = PlateColors.AppBackground
+        containerColor = MaterialTheme.colorScheme.appBackground
     ) { innerPadding ->
         SettingsScreenContent(
             uiState = uiState,

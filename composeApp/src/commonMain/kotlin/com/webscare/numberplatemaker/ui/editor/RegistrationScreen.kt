@@ -24,6 +24,9 @@ import com.webscare.numberplatemaker.ui.PlateViewModel
 import com.webscare.numberplatemaker.ui.canvas.PlateCanvas
 import com.webscare.numberplatemaker.ui.editor.components.EditorStepTopAppBar
 import com.webscare.numberplatemaker.ui.theme.PlateColors
+import com.webscare.numberplatemaker.ui.theme.appBackground
+import com.webscare.numberplatemaker.ui.theme.softBlack
+import com.webscare.numberplatemaker.ui.theme.subtitleGray
 import com.webscare.numberplatemaker.util.addPressEffect
 
 @Composable
@@ -60,19 +63,19 @@ fun RegistrationScreen(
         }) { innerPadding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(innerPadding)
-                .background(PlateColors.AppBackground).padding(24.dp),
+                .background(MaterialTheme.colorScheme.appBackground).padding(24.dp),
             horizontalAlignment = Alignment.Start
         ) {
             Text(
                 "Enter plate number",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = PlateColors.SoftBlack,
+                color = MaterialTheme.colorScheme.softBlack,
                 lineHeight = 32.sp
             )
             Text(
                 "Letters and digits — the app will format and uppercase automatically.",
-                color = PlateColors.SubtitleGray,
+                color = MaterialTheme.colorScheme.subtitleGray,
                 fontSize = 14.sp,
                 lineHeight = 16.sp
             )
@@ -83,7 +86,7 @@ fun RegistrationScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.surface)
                     .border(1.dp, Color(0xFFE5E2DA), RoundedCornerShape(16.dp))
                     .padding(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(24.dp)
@@ -116,8 +119,8 @@ fun RegistrationScreen(
                 label = { Text("Plate Number") },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface
                 ),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp)
@@ -128,7 +131,7 @@ fun RegistrationScreen(
                     .fillMaxWidth()
                     .weight(1.5f)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xFFF0F0F0))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -163,7 +166,7 @@ fun RegistrationScreen(
                     "Generate Plate",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (isButtonEnabled) Color.White else Color.LightGray
+                    color = if (isButtonEnabled) MaterialTheme.colorScheme.surface else Color.LightGray
                 )
             }
         }
@@ -180,9 +183,9 @@ fun InfoBox(
         Text(
             label,
             fontSize = 10.sp,
-            color = PlateColors.SubtitleGray,
+            color = MaterialTheme.colorScheme.subtitleGray,
             fontWeight = FontWeight.Bold
         )
-        Text(value, fontWeight = FontWeight.Bold, color = PlateColors.SoftBlack)
+        Text(value, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.softBlack)
     }
 }

@@ -38,6 +38,8 @@ import com.webscare.numberplatemaker.domain.models.ExportFormat
 import com.webscare.numberplatemaker.ui.PlateViewModel
 import com.webscare.numberplatemaker.ui.canvas.PlateCanvas
 import com.webscare.numberplatemaker.ui.theme.PlateColors
+import com.webscare.numberplatemaker.ui.theme.appBackground
+import com.webscare.numberplatemaker.ui.theme.subtitleGray
 import com.webscare.numberplatemaker.util.addPressEffect
 import com.webscare.numberplatemaker.util.formatTimestamp
 import com.webscare.numberplatemaker.util.toByteArray
@@ -46,7 +48,10 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PreviewScreen(
-    viewModel: PlateViewModel, onBackClick: () -> Unit,navigateToHome: () -> Unit, plateId: String? = null
+    viewModel: PlateViewModel,
+    onBackClick: () -> Unit,
+    navigateToHome: () -> Unit,
+    plateId: String? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scope = rememberCoroutineScope()
@@ -74,8 +79,68 @@ fun PreviewScreen(
     Scaffold(
         topBar = {
             EditorStepTopAppBar(
-                title = "Your Plate", currentStep = 3, totalSteps = 3, onBackClick = onBackClick,showSteps = false
+                title = "Your Plate",
+                currentStep = 3,
+                totalSteps = 3,
+                onBackClick = onBackClick,
+                showSteps = false
             )
+        },
+        bottomBar = {
+            Surface(
+                color = Color.Transparent,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .height(56.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .width(60.dp)
+                            .fillMaxHeight()
+                            .addPressEffect {
+                                viewModel.clearRegistrationFields()
+                                navigateToHome()
+                            }
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.surface),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Home, null, tint = Color(0xFF555555))
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .addPressEffect {
+                                if (!uiState.exporting) showExportSheet = true
+                            }
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (uiState.exporting) Color.Gray else Color(0xFF0C8A53)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (uiState.exporting) {
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.surface,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        } else {
+                            Text(
+                                "Download HD",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.surface
+                            )
+                        }
+
+                    }
+                }
+            }
         }
     ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
@@ -83,7 +148,7 @@ fun PreviewScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(PlateColors.AppBackground)
+                    .background(MaterialTheme.colorScheme.appBackground)
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -91,7 +156,7 @@ fun PreviewScreen(
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp))
-                        .background(Color.White).padding(24.dp),
+                        .background(MaterialTheme.colorScheme.surface).padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
@@ -183,85 +248,38 @@ fun PreviewScreen(
                 }
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(
                         modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         InfoRow(
                             label = "Registration",
                             value = plateData?.plateNumber ?: uiState.registrationNumber
                         )
-                        Divider(color = Color(0xFFF0F0F0))
+                        Divider(color = MaterialTheme.colorScheme.subtitleGray)
 
                         InfoRow(
                             label = "Vehicle Type",
                             value = plateData?.category ?: uiState.selectedVehicle?.name ?: "N/A"
                         )
-                        Divider(color = Color(0xFFF0F0F0))
+                        Divider(color = MaterialTheme.colorScheme.subtitleGray)
 
                         InfoRow(
                             label = "Province",
                             value = plateData?.province ?: uiState.selectedProvince?.name ?: "N/A"
                         )
-                        Divider(color = Color(0xFFF0F0F0))
+                        Divider(color = MaterialTheme.colorScheme.subtitleGray)
 
                         // Agar plate saved hai toh uska timestamp dikhayein, warna aaj ki date
                         InfoRow(
                             label = "Issued",
-                            value = plateData?.let { formatTimestamp(it.timestamp) } ?: "20 May 2026"
+                            value = plateData?.let { formatTimestamp(it.timestamp) }
+                                ?: "20 May 2026"
                         )
 
-                    }
-                }
-                if (plateId == null) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .width(60.dp)
-                                .fillMaxHeight()
-                                .addPressEffect {
-                                    viewModel.clearRegistrationFields()
-                                    navigateToHome()
-                                }
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(Color.White)
-                               ,
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Default.Home, null, tint = Color(0xFF555555))
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight()
-                                .addPressEffect {
-                                    if (!uiState.exporting) showExportSheet = true
-                                }
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(if (uiState.exporting) Color.Gray else Color(0xFF0C8A53))
-                               ,
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (uiState.exporting) {
-                                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
-                            } else {
-                                Text(
-                                    "Download HD",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                            }
-                        }
                     }
                 }
             }
@@ -275,7 +293,7 @@ fun PreviewScreen(
                     Snackbar(
                         snackbarData = data,
                         containerColor = Color(0xFF0C8A53).copy(alpha = 0.9f),
-                        contentColor = Color.White,
+                        contentColor = MaterialTheme.colorScheme.surface,
                         shape = RoundedCornerShape(12.dp)
                     )
                 }
@@ -307,7 +325,9 @@ private fun ExportOptionsList(onFormatSelected: (ExportFormat) -> Unit) {
     ) {
         Text(
             text = "Select Ultra HD Format", style = MaterialTheme.typography.titleMedium.copy(
-                color = Color(0xFF1A1A1A), fontWeight = FontWeight.Black, fontSize = 18.sp
+                color = MaterialTheme.colorScheme.onBackground,
+                fontWeight = FontWeight.Black,
+                fontSize = 18.sp
             )
         )
         Spacer(modifier = Modifier.height(20.dp))
@@ -344,17 +364,24 @@ private fun ExportFormatItem(
             modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp, horizontal = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(icon, null, tint = Color(0xFF1A1A1A), modifier = Modifier.size(24.dp))
+            Icon(
+                icon,
+                null,
+                tint = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.size(24.dp)
+            )
             Spacer(modifier = Modifier.width(16.dp))
             Column {
                 Text(
                     title,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1A1A1A)
+                    color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
-                    subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF888880)
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.subtitleGray
                 )
             }
         }

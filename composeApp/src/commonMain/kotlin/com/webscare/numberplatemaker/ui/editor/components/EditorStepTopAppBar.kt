@@ -12,6 +12,7 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -23,6 +24,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.webscare.numberplatemaker.ui.theme.PlateColors
+import com.webscare.numberplatemaker.ui.theme.appBackground
+import com.webscare.numberplatemaker.ui.theme.softBlack
+import com.webscare.numberplatemaker.ui.theme.subtitleGray
 import com.webscare.numberplatemaker.util.addPressEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,7 +47,7 @@ fun EditorStepTopAppBar(
                     text = title,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = PlateColors.SoftBlack
+                    color = MaterialTheme.colorScheme.softBlack
                 )
             },
             navigationIcon = {
@@ -52,14 +56,14 @@ fun EditorStepTopAppBar(
                         .padding(start = 16.dp)
                         .size(40.dp)
                         .addPressEffect { onBackClick() }
-                        .background(Color.White, shape = CircleShape)
+                        .background(MaterialTheme.colorScheme.surface, shape = CircleShape)
                         .clip(CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = PlateColors.SoftBlack,
+                        tint = MaterialTheme.colorScheme.softBlack,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -70,19 +74,19 @@ fun EditorStepTopAppBar(
                         text = "$currentStep/$totalSteps",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = PlateColors.SubtitleGray.copy(alpha = 0.8f),
+                        color = MaterialTheme.colorScheme.subtitleGray.copy(alpha = 0.8f),
                         modifier = Modifier.padding(end = 20.dp)
                     )
                 }
             },
             colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                containerColor = PlateColors.AppBackground
+                containerColor = MaterialTheme.colorScheme.appBackground
             )
         )
         HorizontalDivider(
-            modifier = Modifier.background(PlateColors.AppBackground),
+            modifier = Modifier.background(MaterialTheme.colorScheme.appBackground),
             thickness = 1.dp,
-            color = PlateColors.SubtitleGray.copy(alpha = 0.15f)
+            color = MaterialTheme.colorScheme.subtitleGray.copy(alpha = 0.15f)
         )
     }
 }

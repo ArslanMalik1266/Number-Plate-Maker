@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButtonDefaults.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.webscare.numberplatemaker.domain.models.SettingsUiState
 import com.webscare.numberplatemaker.ui.editor.InfoRow
 import com.webscare.numberplatemaker.ui.theme.PlateColors
+import com.webscare.numberplatemaker.ui.theme.appBackground
 import com.webscare.numberplatemaker.util.addPressEffect
 
 @Composable
@@ -43,7 +45,7 @@ fun SettingsScreenContent(
 
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize().background(PlateColors.AppBackground),
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.appBackground),
         contentPadding = contentPadding
     ) {
         item { SectionHeader("APPEARANCE") }
@@ -86,7 +88,7 @@ fun SectionHeader(text: String) {
 
 @Composable
 fun InfoRowSettings(title: String, value: String) {
-    Surface(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), shape = RoundedCornerShape(16.dp), color = Color.White) {
+    Surface(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface) {
         Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(title, fontWeight = FontWeight.Medium)
             Text(value, fontWeight = FontWeight.Bold, color = Color.Gray)
@@ -101,7 +103,7 @@ fun SettingsRow(
     icon: ImageVector, // Icon parameter made required
     onClick: () -> Unit,
     showChevron: Boolean = true,
-    titleColor: Color = Color(0xFF1A1A1A)
+    titleColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
     Box(
         modifier = Modifier
@@ -109,7 +111,7 @@ fun SettingsRow(
             .addPressEffect() { onClick() }
             .padding(horizontal = 16.dp, vertical = 4.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(Color.White) // Light Mode background
+            .background(MaterialTheme.colorScheme.surface) // Light Mode background
             .padding(16.dp),
         contentAlignment = Alignment.CenterStart
     ) {
@@ -129,7 +131,7 @@ fun SettingsRow(
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = Color(0xFFE53935),
+                    tint = MaterialTheme.colorScheme.error,
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -148,7 +150,7 @@ fun SettingsRow(
                 Text(
                     text = subtitle,
                     fontSize = 13.sp,
-                    color = Color.Gray // Subtitle Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 

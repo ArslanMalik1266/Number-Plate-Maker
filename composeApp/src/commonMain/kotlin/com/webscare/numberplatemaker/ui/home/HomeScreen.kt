@@ -26,9 +26,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -43,12 +45,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.webscare.numberplatemaker.domain.models.Province
 import com.webscare.numberplatemaker.domain.models.RecentPlateItem
+import com.webscare.numberplatemaker.domain.models.VehicleType
 import com.webscare.numberplatemaker.mapper.toEntity
 import com.webscare.numberplatemaker.ui.PlateViewModel
 import com.webscare.numberplatemaker.ui.components.PkPlateTopAppBar
 import com.webscare.numberplatemaker.ui.components.RecentPlateCard
 import com.webscare.numberplatemaker.ui.theme.PlateColors
+import com.webscare.numberplatemaker.ui.theme.appBackground
+import com.webscare.numberplatemaker.ui.theme.gradientGreenDark
+import com.webscare.numberplatemaker.ui.theme.gradientGreenLight
+import com.webscare.numberplatemaker.ui.theme.softBlack
+import com.webscare.numberplatemaker.ui.theme.subtitleGray
 import com.webscare.numberplatemaker.util.addPressEffect
 
 @Composable
@@ -63,94 +72,81 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val stats = remember(uiState.savedPlates) { viewModel.getStats() }
 
+    LaunchedEffect(Unit) {
+        viewModel.resetSelection()
+        viewModel.onVehicleSelected(VehicleType.PRIVATE_CAR)
+        viewModel.onProvinceSelected(Province.PUNJAB)
+    }
 
     Scaffold(
         modifier = modifier,
-        topBar = {
-            PkPlateTopAppBar(onSettingsClick = onNavigateToSettings)
-        }
+        topBar = { PkPlateTopAppBar(onSettingsClick = onNavigateToSettings) }
     ) { innerPadding ->
 
-        // 1. Parent main Column (Is par koi scroll nahi lagaya, yeh fixed rahega)
-        Column(
+        // LazyColumn ko pura space dein
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .background(PlateColors.AppBackground)
-                .padding(horizontal = 24.dp, vertical = 16.dp)
+                .background(MaterialTheme.colorScheme.appBackground),
+            contentPadding = PaddingValues(
+                start = 24.dp,
+                end = 24.dp,
+                top = innerPadding.calculateTopPadding() + 16.dp,
+                bottom = 24.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // ----- FIXED UPPER CONTENT SECTION -----
-            Text(
-                text = "Salaam — design your plate",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = PlateColors.SoftBlack,
-                lineHeight = 38.sp,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = "Pick a vehicle type and province. Front and back plates ready in seconds.",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Normal,
-                color = PlateColors.SubtitleGray,
-                lineHeight = 20.sp,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            GeneratePlateCard(onGenerateClick = onGeneratePlateClick)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                StatItemCard(value = stats.first.toString(), label = "Total")
-                StatItemCard(value = stats.second.toString(), label = "Provinces")
-                StatItemCard(value = stats.third.toString(), label = "This week")
+            // 1. Header Section
+            item {
+                Text(
+                    text = "Salaam — design your plate",
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.softBlack,
+                    lineHeight = 38.sp
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "Pick a vehicle type and province. Front and back plates ready in seconds.",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.subtitleGray
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                GeneratePlateCard(onGenerateClick = onGeneratePlateClick)
             }
-            Spacer(modifier = Modifier.height(24.dp))
-            RecentPlatesHeader(onViewAllClick = onViewAllRecentClick)
-            Spacer(modifier = Modifier.height(8.dp))
-            if (uiState.savedPlates.isEmpty()) {
-                // Empty State UI
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 40.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+
+            // 2. Stats Section
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    StatItemCard(value = stats.first.toString(), label = "Total")
+                    StatItemCard(value = stats.second.toString(), label = "Provinces")
+                    StatItemCard(value = stats.third.toString(), label = "This week")
+                }
+            }
+
+            // 3. Recent Plates Header
+            item {
+                RecentPlatesHeader(onViewAllClick = onViewAllRecentClick)
+            }
+
+            // 4. Recent Plates List
+            if (uiState.savedPlates.isEmpty()) {
+                item {
                     Text(
                         text = "No plates generated yet",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = PlateColors.SubtitleGray
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Tap the green button to start",
-                        fontSize = 14.sp,
-                        color = PlateColors.SubtitleGray.copy(alpha = 0.6f)
+                        modifier = Modifier.padding(vertical = 40.dp).fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.subtitleGray
                     )
                 }
             } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(bottom = 8.dp)
-                ) {
-                    items(uiState.savedPlates) { plateItem ->
-                        RecentPlateCard(
-                            item = plateItem,
-                            onItemClick = onPlateItemClick,
-                        )
-                    }
+                items(uiState.savedPlates) { plateItem ->
+                    RecentPlateCard(
+                        item = plateItem,
+                        onItemClick = onPlateItemClick,
+                    )
                 }
             }
         }
@@ -164,8 +160,8 @@ fun GeneratePlateCard(
     modifier: Modifier = Modifier
 ) {
     val gradientColors = listOf(
-        Color(0xFF0C8A53),
-        Color(0xFF046637)
+        MaterialTheme.colorScheme.gradientGreenLight,
+        MaterialTheme.colorScheme.gradientGreenDark
     )
     Box(
         modifier = modifier
@@ -250,7 +246,7 @@ fun RowScope.StatItemCard(
         modifier = modifier
             .weight(1f)
             .background(
-                color = Color.White,
+                color = MaterialTheme.colorScheme.surface,
                 shape = RoundedCornerShape(22.dp)
             )
             .padding(horizontal = 16.dp, vertical = 16.dp)
@@ -259,7 +255,7 @@ fun RowScope.StatItemCard(
             text = value,
             fontSize = 24.sp,
             fontWeight = FontWeight.ExtraBold,
-            color = PlateColors.SoftBlack,
+            color = MaterialTheme.colorScheme.softBlack,
             lineHeight = 26.sp
         )
         Spacer(modifier = Modifier.height(4.dp))
@@ -267,7 +263,7 @@ fun RowScope.StatItemCard(
             text = label,
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
-            color = PlateColors.SubtitleGray,
+            color = MaterialTheme.colorScheme.subtitleGray,
             lineHeight = 16.sp
         )
     }
@@ -293,7 +289,7 @@ fun RecentPlatesHeader(
                 text = "Recent plates",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
-                color = PlateColors.SoftBlack
+                color = MaterialTheme.colorScheme.softBlack
             )
         }
 
