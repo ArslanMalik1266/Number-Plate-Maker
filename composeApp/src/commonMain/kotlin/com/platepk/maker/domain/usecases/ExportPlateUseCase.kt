@@ -1,0 +1,39 @@
+package com.platepk.maker.domain.usecases
+
+import com.platepk.maker.domain.models.ExportFormat
+import com.platepk.maker.domain.repo.PlateExportRepository
+
+class ExportPlateUseCase(
+    private val repository: PlateExportRepository
+) {
+    suspend operator fun invoke(
+        frontImageData: ByteArray,
+        backImageData: ByteArray,
+        format: ExportFormat,
+        registrationNumber: String,
+        vehicleType: String
+    ): Result<String> = repository.export(
+        frontImageData = frontImageData,
+        backImageData = backImageData,
+        format = format,
+        registrationNumber = registrationNumber,
+        vehicleType = vehicleType
+    )
+    // Add karo
+    suspend fun savePdf(
+        frontImageData: ByteArray,
+        backImageData: ByteArray,
+        registrationNumber: String,
+        vehicleType: String
+    ): String = repository.savePdf(
+        frontImageData = frontImageData,
+        backImageData = backImageData,
+        registrationNumber = registrationNumber,
+        vehicleType = vehicleType
+    )
+    suspend fun savePlateLocally(
+        bitmapData: ByteArray,
+        fileName: String
+    ): String = repository.savePlateFile(bitmapData, fileName)
+
+}
