@@ -23,7 +23,9 @@ data class PlateUiState(
     val exporting: Boolean = false,
     val exportSuccess: Boolean = false,
     val exportError: String? = null,
-    val loading : Boolean = true
+    val loading : Boolean = true,
+    val frontImagePath: String? = null,
+    val backImagePath: String? = null
 )
 
 data class PlateModel(

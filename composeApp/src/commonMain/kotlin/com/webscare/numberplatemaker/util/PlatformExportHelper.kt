@@ -1,5 +1,7 @@
 package com.webscare.numberplatemaker.util
 
+import coil3.annotation.InternalCoilApi
+import coil3.util.MimeTypeMap
 import com.webscare.numberplatemaker.domain.models.ExportFormat
 
 expect class PlatformExportHelper {
@@ -15,4 +17,7 @@ expect class PlatformExportHelper {
         registrationNumber: String,
         vehicleType: String
     ): String
+}
+expect object MimeTypeHelper {
+    fun getMimeType(filePath: String): String?
 }

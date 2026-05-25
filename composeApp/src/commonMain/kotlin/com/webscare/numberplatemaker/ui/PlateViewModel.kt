@@ -28,6 +28,7 @@ import com.webscare.numberplatemaker.mapper.toDomain
 import com.webscare.numberplatemaker.mapper.toEntity
 import com.webscare.numberplatemaker.util.ExportResult
 import com.webscare.numberplatemaker.util.PlatformClock
+import com.webscare.numberplatemaker.util.readFileBytes
 import com.webscare.numberplatemaker.util.toBitmapByteArray
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -104,6 +105,7 @@ class PlateViewModel(
                 println("DEBUG_FETCH: Database se ${entities.size} plates mili hain")
                 entities.forEach { plate ->
                     println("DEBUG_FETCH: Plate ID: ${plate.id}, Reg: ${plate.registrationNumber}, Front: ${plate.frontImagePath}")
+                    println("DEBUG_FETCH: Plate ID: ${plate.id}, Reg: ${plate.registrationNumber}, back: ${plate.backImagePath}")
                 }
                 val domainModels = entities.map { it.toDomain() }
                 _uiState.update { it.copy(savedPlates = domainModels) }
@@ -265,30 +267,7 @@ class PlateViewModel(
                         province = province,
                         regNumber = regNumber
                     )
-                    val frontBytes = previewData.frontPlate.toBitmapByteArray()
-                    val backBytes = previewData.backPlate.toBitmapByteArray()
-                    val frontPath = exportPlateUseCase.savePlateLocally(
-                        frontBytes,
-                        "${regNumber}_${timestamp}_front"
-                    )
-                    println("DEBUG_FILE_SIZE: Front file size: ${frontBytes.size} bytes")
-                    println("DEBUG_FILE_PATH: Full Path: $frontPath")
-                    val backPath = exportPlateUseCase.savePlateLocally(
-                        backBytes,
-                        "${regNumber}_${timestamp}_back"
-                    )
 
-                    val newPlate = RecentPlateItem(
-                        id = timestamp.toString(),
-                        plateNumber = regNumber,
-                        category = vehicle.name,
-                        province = province.name,
-                        timestamp = timestamp,
-                        plateImageRes = frontPath,
-                        plateImageBackRes = backPath,
-                        pdfPath = null
-                    )
-                    savePlateUseCase(newPlate.toEntity())
                     _uiState.update {
                         it.copy(
                             registrationNumber = regNumber,
@@ -314,6 +293,41 @@ class PlateViewModel(
         }
     }
 
+    fun savePlateImages(frontBytes: ByteArray, backBytes: ByteArray) {  // ✅ ByteArray
+        val currentState = _uiState.value
+        val vehicle = currentState.selectedVehicle ?: return
+        val province = currentState.selectedProvince ?: return
+        val timestamp = clock.getCurrentMillis()
+        val regNumber = currentState.registrationNumber
+
+        viewModelScope.launch {
+            val frontPath = exportPlateUseCase.savePlateLocally(
+                frontBytes, "${regNumber}_${timestamp}_front"
+            )
+            val backPath = exportPlateUseCase.savePlateLocally(
+                backBytes, "${regNumber}_${timestamp}_back"
+            )
+
+            if (frontPath.isEmpty() || backPath.isEmpty()) return@launch
+
+            val newPlate = RecentPlateItem(
+                id = "0",
+                plateNumber = regNumber,
+                category = vehicle.name,
+                province = province.name,
+                timestamp = timestamp,
+                plateImageRes = frontPath,
+                plateImageBackRes = backPath,
+                pdfPath = null
+            )
+            savePlateUseCase(newPlate.toEntity())
+            _uiState.update {
+                it.copy(frontImagePath = frontPath, backImagePath = backPath)
+            }
+            println("DEBUG_SAVED: front=$frontPath back=$backPath")
+        }
+    }
+
     // PlateViewModel.kt mein:
 
     fun exportPlate(
@@ -321,32 +335,30 @@ class PlateViewModel(
         backImageData: ByteArray,
         format: ExportFormat
     ) {
-        val timestamp = clock.getCurrentMillis()
-
         viewModelScope.launch {
-            // 1. Loading start karein
             _uiState.update { it.copy(exporting = true, exportError = null) }
-
             try {
                 val currentState = _uiState.value
-
-                // 2. Export call karein (Yeh Result<String> return karta hai)
-                exportPlateUseCase(
+                val result = exportPlateUseCase(
                     frontImageData, backImageData, format,
                     currentState.registrationNumber,
                     currentState.selectedVehicle?.name ?: "VEHICLE"
                 )
-
-
-                _uiState.update { it.copy(exporting = false, exportSuccess = true) }
-
+                result.fold(
+                    onSuccess = {
+                        _uiState.update { it.copy(exporting = false, exportSuccess = true) }
+                    },
+                    onFailure = { e ->
+                        _uiState.update { it.copy(exporting = false, exportError = e.message) }
+                    }
+                )
             } catch (e: Exception) {
                 _uiState.update { it.copy(exporting = false, exportError = e.message) }
             }
-
-
         }
     }
+
+
 
 
     fun navigateBack() {
@@ -411,6 +423,39 @@ class PlateViewModel(
                 frontPlate = null,
                 backPlate = null
             )
+        }
+    }
+
+    fun exportFromHistory(
+        frontPath: String,
+        backPath: String,
+        format: ExportFormat,
+        registrationNumber: String,
+        vehicleType: String
+    ) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(exporting = true, exportError = null) }
+            try {
+                val frontBytes = readFileBytes(frontPath)  // ✅ expect/actual
+                val backBytes = readFileBytes(backPath)
+
+                val result = exportPlateUseCase(
+                    frontBytes, backBytes, format,
+                    registrationNumber,
+                    vehicleType
+                )
+                result.fold(
+                    onSuccess = {
+                        _uiState.update { it.copy(exporting = false, exportSuccess = true) }
+                    },
+                    onFailure = { e ->
+                        _uiState.update { it.copy(exporting = false, exportError = e.message) }
+                    }
+                )
+            } catch (e: Exception) {
+                _uiState.update { it.copy(exporting = false, exportError = e.message) }
+                println("DEBUG_EXPORT_HISTORY_ERROR: ${e.message}")
+            }
         }
     }
 

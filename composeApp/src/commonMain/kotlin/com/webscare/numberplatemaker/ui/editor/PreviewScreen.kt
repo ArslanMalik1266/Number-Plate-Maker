@@ -43,6 +43,7 @@ import com.webscare.numberplatemaker.ui.theme.subtitleGray
 import com.webscare.numberplatemaker.util.addPressEffect
 import com.webscare.numberplatemaker.util.formatTimestamp
 import com.webscare.numberplatemaker.util.toByteArray
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,6 +74,23 @@ fun PreviewScreen(
     LaunchedEffect(uiState.exportSuccess) {
         if (uiState.exportSuccess) {
             viewModel.resetExportState()
+        }
+    }
+
+    LaunchedEffect(uiState.frontPlate, uiState.backPlate) {
+        if (plateId == null && uiState.frontPlate != null && uiState.backPlate != null) {
+            scope.launch {
+                try {
+                    delay(500)
+                    val frontBitmap = frontLayer.toImageBitmap()
+                    val backBitmap = backLayer.toImageBitmap()
+                    val frontBytes = frontBitmap.toByteArray(ExportFormat.PNG)
+                    val backBytes = backBitmap.toByteArray(ExportFormat.PNG)
+                    viewModel.savePlateImages(frontBytes, backBytes)
+                } catch (e: Exception) {
+                    println("DEBUG_CAPTURE_ERROR: ${e.message}")
+                }
+            }
         }
     }
 
@@ -161,6 +179,7 @@ fun PreviewScreen(
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     if (plateId != null && plateData != null) {
+
                         // History se aaya — saved image dikhao
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
@@ -170,6 +189,7 @@ fun PreviewScreen(
                                 color = Color.Gray
                             )
                             Spacer(modifier = Modifier.height(8.dp))
+
                             AsyncImage(
                                 model = plateData.plateImageRes,
                                 contentDescription = "Front Plate",
@@ -307,9 +327,27 @@ fun PreviewScreen(
             ExportOptionsList { format ->
                 showExportSheet = false
                 scope.launch {
-                    val frontBytes = frontLayer.toImageBitmap().toByteArray(format)
-                    val backBytes = backLayer.toImageBitmap().toByteArray(format)
-                    viewModel.exportPlate(frontBytes, backBytes, format)
+                    if (plateId != null && plateData != null) {
+                        // History mode
+                        val frontPath = plateData.plateImageRes ?: ""
+                        val backPath = plateData.plateImageBackRes ?: ""
+                        if (frontPath.isEmpty() || backPath.isEmpty()) {
+                            snackbarHostState.showSnackbar("Image not found")
+                            return@launch
+                        }
+                        viewModel.exportFromHistory(
+                            frontPath = frontPath,
+                            backPath = backPath,
+                            format = format,
+                            registrationNumber = plateData.plateNumber,
+                            vehicleType = plateData.category
+                        )
+                    } else {
+                        // New plate
+                        val frontBytes = frontLayer.toImageBitmap().toByteArray(format)
+                        val backBytes = backLayer.toImageBitmap().toByteArray(format)
+                        viewModel.exportPlate(frontBytes, backBytes, format)
+                    }
                     snackbarHostState.showSnackbar("Exported as ${format.name}")
                 }
             }

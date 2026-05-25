@@ -1,6 +1,7 @@
 package com.webscare.numberplatemaker.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +30,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import coil3.toUri
 
 import com.webscare.numberplatemaker.domain.models.RecentPlateItem
@@ -36,13 +41,19 @@ import com.webscare.numberplatemaker.ui.theme.softBlack
 import com.webscare.numberplatemaker.ui.theme.subtitleGray
 import com.webscare.numberplatemaker.util.addPressEffect
 import com.webscare.numberplatemaker.util.formatTimestamp
+import numberplatemaker.composeapp.generated.resources.Res
+import numberplatemaker.composeapp.generated.resources.ic_motorcycle
+import numberplatemaker.composeapp.generated.resources.ic_private_car
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun RecentPlateCard(
     item: RecentPlateItem,
     onItemClick: (RecentPlateItem) -> Unit,
     modifier: Modifier = Modifier,
-    onDeleteClick: (() -> Unit)? = null
+    onDeleteClick: (() -> Unit)? = null,
+    isSelectionMode: Boolean = false,
+    isSelected: Boolean = false
 ) {
     LaunchedEffect(item.plateImageRes) {
         println("DEBUG_PATH: Path provided is ${item.plateImageRes}")
@@ -56,12 +67,15 @@ fun RecentPlateCard(
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
-            model = item.plateImageRes,
+            model = ImageRequest.Builder(LocalPlatformContext.current)
+                .data(item.plateImageRes)
+                .crossfade(true)
+                .build(),
             contentDescription = "Plate Image",
             modifier = Modifier.size(60.dp),
-            contentScale = ContentScale.Fit,
-
-
+            error = painterResource(Res.drawable.ic_motorcycle),
+            placeholder = painterResource(Res.drawable.ic_private_car),
+            contentScale = ContentScale.Fit
         )
         Spacer(modifier = Modifier.width(16.dp))
         Column(
@@ -112,10 +126,7 @@ fun RecentPlateCard(
             Box(
                 modifier = Modifier
                     .size(36.dp)
-                    .background(
-                        color = Color(0xFFFFEBEE),
-                        shape = androidx.compose.foundation.shape.CircleShape
-                    )
+                    .background(color = Color(0xFFFFEBEE), shape = androidx.compose.foundation.shape.CircleShape)
                     .addPressEffect { onDeleteClick() },
                 contentAlignment = Alignment.Center
             ) {
@@ -125,6 +136,30 @@ fun RecentPlateCard(
                     tint = MaterialTheme.colorScheme.redColor,
                     modifier = Modifier.size(18.dp)
                 )
+            }
+        } else if (isSelectionMode) {
+            Box(
+                modifier = Modifier
+                    .size(20.dp)
+                    .background(
+                        color = if (isSelected) Color(0xFF0C8A53) else Color.Transparent,
+                        shape = RoundedCornerShape(4.dp)
+                    )
+                    .then(
+                        if (!isSelected) Modifier.border(
+                            2.dp, Color.Gray, RoundedCornerShape(4.dp)
+                        ) else Modifier
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isSelected) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Selected",
+                        tint = MaterialTheme.colorScheme.background,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
             }
         } else {
             Icon(

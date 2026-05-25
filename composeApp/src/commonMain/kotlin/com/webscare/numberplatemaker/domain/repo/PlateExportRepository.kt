@@ -19,4 +19,5 @@ interface PlateExportRepository {
     ): String
 
     suspend fun savePlateFile(bitmapData: ByteArray, fileName: String): String
+
 }

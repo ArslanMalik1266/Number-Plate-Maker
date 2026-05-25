@@ -24,9 +24,9 @@ fun RecentPlateItem.toEntity(): PlateEntity {
         vehicleType = this.category,
         province = this.province,
         issuedDate = this.timestamp,
-        frontImagePath = this.plateImageRes ?: "",
-        backImagePath = this.plateImageBackRes ?: "",
-        pdfFilePath = this.pdfPath ?: "",
+        frontImagePath = this.plateImageRes?.ifEmpty { null },
+        backImagePath = this.plateImageBackRes?.ifEmpty { null },
+        pdfFilePath = this.pdfPath?.ifEmpty { null },
         exportFormat = if (!this.pdfPath.isNullOrEmpty()) "PDF" else "PNG"
     )
 }

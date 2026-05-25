@@ -38,6 +38,9 @@ class PlateExportRepositoryImpl(
         )
     }
     override suspend fun savePlateFile(bitmapData: ByteArray, fileName: String): String {
-        return saveBitmapToInternalStorage(bitmapData, fileName)
+        val nameWithExt = if (fileName.endsWith(".png")) fileName else "$fileName.png"
+        return saveBitmapToInternalStorage(bitmapData, nameWithExt)
     }
+
+
 }

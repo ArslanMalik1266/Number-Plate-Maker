@@ -31,7 +31,9 @@ import com.webscare.numberplatemaker.util.addPressEffect
 fun HistoryTopAppBar(
     onBackClick: () -> Unit,
     onClearAllClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isSelectionMode: Boolean = false,
+    selectedCount: Int = 0
 ) {
 
     CenterAlignedTopAppBar(
@@ -57,7 +59,7 @@ fun HistoryTopAppBar(
         },
         actions = {
             Text(
-                text = "Clear all",
+                text = if (isSelectionMode && selectedCount > 0) "Delete ($selectedCount)" else "Clear all",
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFFD32F2F),

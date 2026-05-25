@@ -12,6 +12,8 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.pdf.PdfDocument
 import android.graphics.Paint
+import android.webkit.MimeTypeMap
+import coil3.annotation.InternalCoilApi
 
 actual class PlatformExportHelper(private val context: Context) {
 
@@ -25,9 +27,12 @@ actual class PlatformExportHelper(private val context: Context) {
 
             if (format == ExportFormat.PDF) {
                 // Gallery mein save mat karo — sirf app directory mein PNG thumbnails
-                val frontThumb = saveToAppDirectory(frontData, "thumb_front_$timestamp")
-                val backThumb = saveToAppDirectory(backData, "thumb_back_$timestamp")
-                "${frontThumb ?: ""}|${backThumb ?: ""}"
+                savePdf(
+                    frontData = frontData,
+                    backData = backData,
+                    registrationNumber = "Plate_$timestamp",
+                    vehicleType = ""
+                )
             } else {
                 val frontPath = saveToGallery(frontData, "Plate_Front_$timestamp", format)
                 val backPath = saveToGallery(backData, "Plate_Back_$timestamp", format)
@@ -39,7 +44,7 @@ actual class PlatformExportHelper(private val context: Context) {
                 "$fPath|$bPath"
             }
         } catch (e: Exception) {
-            "Error: ${e.message}"
+            throw e
         }
     }
 
@@ -72,10 +77,11 @@ actual class PlatformExportHelper(private val context: Context) {
         vehicleType: String
     ): String = withContext(Dispatchers.IO) {
         try {
-            val cleanRegNo = registrationNumber.trim().uppercase().replace("\\s+".toRegex(), "_")
-            val cleanVehicleType = vehicleType.trim().uppercase()
-            val timestamp = System.currentTimeMillis()
-            val fileName = "Plate_${cleanRegNo}_${cleanVehicleType}_$timestamp.pdf"
+            val cleanRegNo = registrationNumber.trim().uppercase().replace("\\s+".toRegex(), "-")
+            val cleanVehicleType = vehicleType.trim().uppercase().replace("_", " ")
+            val dateFormat = java.text.SimpleDateFormat("dd-MMM-yyyy", java.util.Locale.ENGLISH)
+            val date = dateFormat.format(java.util.Date())
+            val fileName = "NumberPlate_${cleanRegNo}_${cleanVehicleType}_$date.pdf"
 
             val pdfDocument = PdfDocument()
             val paint = Paint()
@@ -124,10 +130,10 @@ actual class PlatformExportHelper(private val context: Context) {
             pdfDocument.close()
             throw Exception("Failed to save PDF")
         } catch (e: Exception) {
-            "Error: ${e.message}"
+            throw e
         }
     }
-    private fun saveToAppDirectory(data: ByteArray, fileName: String): String? {
+    fun saveToAppDirectory(data: ByteArray, fileName: String): String? {
         return try {
             val dir = java.io.File(context.filesDir, "plate_thumbnails")
             if (!dir.exists()) dir.mkdirs()
@@ -135,7 +141,15 @@ actual class PlatformExportHelper(private val context: Context) {
             file.outputStream().use { it.write(data) }
             file.absolutePath
         } catch (e: Exception) {
+            println("DEBUG_SAVE_ERROR: ${e.message}")
             null
         }
+    }
+}
+
+actual object MimeTypeHelper {
+    actual fun getMimeType(filePath: String): String? {
+        val extension = MimeTypeMap.getFileExtensionFromUrl(filePath)
+        return MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
     }
 }

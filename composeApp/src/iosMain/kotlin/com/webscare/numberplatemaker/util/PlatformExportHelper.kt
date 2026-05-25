@@ -11,6 +11,7 @@ import platform.CoreGraphics.CGSizeMake
 import platform.Foundation.NSData
 import platform.Foundation.NSDate
 import platform.Foundation.NSTemporaryDirectory
+import platform.Foundation.NSURL
 import platform.Foundation.dataWithBytes
 import platform.Foundation.timeIntervalSince1970
 import platform.Foundation.writeToFile
@@ -23,6 +24,7 @@ import platform.UIKit.UIGraphicsGetImageFromCurrentImageContext
 import platform.UIKit.UIImage
 import platform.UIKit.UIImageJPEGRepresentation
 import platform.UIKit.UIImagePNGRepresentation
+import platform.UniformTypeIdentifiers.UTType
 
 @OptIn(ExperimentalForeignApi::class)
 actual class PlatformExportHelper {
@@ -100,4 +102,12 @@ actual class PlatformExportHelper {
         this.usePinned { pinned ->
             NSData.dataWithBytes(pinned.addressOf(0), this.size.toULong())
         }
+}
+
+actual object MimeTypeHelper {
+    actual fun getMimeType(filePath: String): String? {
+        val url = NSURL.fileURLWithPath(filePath)
+        val type = UTType.typeWithFilenameExtension(url.pathExtension ?: "")
+        return type?.preferredMIMEType
+    }
 }

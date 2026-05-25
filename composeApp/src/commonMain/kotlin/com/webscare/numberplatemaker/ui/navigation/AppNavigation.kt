@@ -35,14 +35,20 @@ fun NavGraphBuilder.appNavigation(
                 scope.launch(kotlinx.coroutines.Dispatchers.Main) {
                     kotlinx.coroutines.delay(50)
                     navController.navigate(Screen.VehicleType.route)
-                }            },
+                }
+            },
             onPlateItemClick = { plate ->
-                navController.navigate(Screen.Details.createRoute(plate.id))
+                scope.launch {
+                    kotlinx.coroutines.delay(50)
+                    navController.navigate(Screen.Details.createRoute(plate.id))
+                }
             },
             viewModel = viewModel
         )
     }
     composable(Screen.History.route) {
+        val scope = rememberCoroutineScope()
+
         HistoryScreen(
             onBackClick = {
                 if (navController.previousBackStackEntry != null) {
@@ -50,7 +56,10 @@ fun NavGraphBuilder.appNavigation(
                 }
             },
             onPlateItemClick = { plate ->
-                navController.navigate(Screen.Details.createRoute(plate.id))
+                scope.launch {
+                    kotlinx.coroutines.delay(50)
+                    navController.navigate(Screen.Details.createRoute(plate.id))
+                }
             },
             viewModel = viewModel
         )
