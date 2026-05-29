@@ -13,6 +13,9 @@ import com.platepk.maker.ui.editor.RegistrationScreen
 import com.platepk.maker.ui.editor.VehicleTypeScreen
 import com.platepk.maker.ui.history.HistoryScreen
 import com.platepk.maker.ui.home.HomeScreen
+import com.platepk.maker.ui.order.AddressDetailScreen
+import com.platepk.maker.ui.order.PlateTypeScreen
+import com.platepk.maker.ui.order.ReviewOrderScreen
 import com.platepk.maker.ui.settings.SettingsScreen
 import kotlinx.coroutines.launch
 
@@ -125,7 +128,10 @@ fun NavGraphBuilder.appNavigation(
                 viewModel.navigateBack()
                 navController.popBackStack()
             },
-            navigateToHome = { navController.navigate(Screen.Home.route) }
+            navigateToHome = {
+                navController.navigate(Screen.Home.route)
+            },
+            orderButton = { navController.navigate(Screen.PlateType.createRoute(null)) }
 
         )
     }
@@ -136,6 +142,8 @@ fun NavGraphBuilder.appNavigation(
         val id = backStackEntry.arguments?.getString("plateId")
         val plateData = viewModel.uiState.value.savedPlates.find { it.id == id }
 
+
+
         println("DEBUG_DETAIL: plateId = $id")
         println("DEBUG_DETAIL: plateData = $plateData")
         println("DEBUG_DETAIL: frontImageRes = ${plateData?.plateImageRes}")
@@ -145,12 +153,44 @@ fun NavGraphBuilder.appNavigation(
             plateId = id,
             isFromRegistration = false,
             onBackClick = { navController.popBackStack() },
-            navigateToHome = { navController.navigate(Screen.Home.route) }
+            navigateToHome = { navController.navigate(Screen.Home.route) },
+            orderButton = { navController.navigate(Screen.PlateType.createRoute(id)) }
         )
     }
     composable(Screen.Settings.route) {
         SettingsScreen(onBackClick = { navController.popBackStack() }, viewModel = viewModel)
     }
+    composable(
+        route = Screen.PlateType.route,
+        arguments = listOf(navArgument("plateId") { type = NavType.StringType; nullable = true })
+    ) { backStackEntry ->
+        val id = backStackEntry.arguments?.getString("plateId")
 
-
+        PlateTypeScreen(
+            viewModel = viewModel,
+            plateId = if (id == "null") null else id,
+            onBackClick = {
+                navController.popBackStack()
+                viewModel.resetOrderState()
+            },
+            onContinueClick = { navController.navigate(Screen.AddressDetail.route) }
+        )
+    }
+    composable(Screen.AddressDetail.route) {
+        AddressDetailScreen(
+            viewModel = viewModel,
+            onBackClick = { navController.popBackStack() },
+            onContinueClick = {
+                navController.navigate(Screen.OrderSummary.route)
+            })
+    }
+    composable(Screen.OrderSummary.route) {
+        ReviewOrderScreen(
+            onBackClick = { navController.popBackStack() },
+            onContinueClick = {},
+            viewModel = viewModel
+        )
+    }
 }
+
+

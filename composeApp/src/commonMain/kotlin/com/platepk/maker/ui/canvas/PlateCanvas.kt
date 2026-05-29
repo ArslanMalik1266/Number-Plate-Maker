@@ -1915,7 +1915,7 @@ private fun DrawScope.drawSindhBikeFront(
     val textColor = Color(config.textColor)
     val stripWidth = w * 0.17f
     val borderThickness = 4.dp.toPx()
-    val cornerRadius = 14.dp.toPx()
+    val cornerRadius = 13.dp.toPx()
 
     val contentLeftEdge = stripWidth
     val availableWidth = w - contentLeftEdge
@@ -1926,7 +1926,7 @@ private fun DrawScope.drawSindhBikeFront(
                 rect = Rect(
                     left = borderThickness,
                     top = borderThickness,
-                    right = stripWidth, // Width constrained to strip
+                    right = stripWidth,
                     bottom = h - borderThickness
                 ),
                 topLeft = CornerRadius(cornerRadius),
@@ -2071,7 +2071,7 @@ private fun DrawScope.drawSindhBikeRear(
     val textColor = Color(config.textColor)
     val stripWidth = w * 0.17f
     val borderThickness = 4.dp.toPx()
-    val cornerRadius = 14.dp.toPx()
+    val cornerRadius = 13.dp.toPx()
 
 
     // --- 1. VERTICAL STRIP PATH ---
@@ -2198,7 +2198,7 @@ private fun DrawScope.drawSindhCarPlate(
     val horizontalPadding = w * 0.08f
     val ajrakHeight = h * 0.25f
     val borderThickness = 4.dp.toPx()
-    val cornerRadius = 14.dp.toPx()
+    val cornerRadius = 13.dp.toPx()
 
     val roundedPath = Path().apply {
         addRoundRect(

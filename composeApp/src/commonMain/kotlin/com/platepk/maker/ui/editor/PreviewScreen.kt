@@ -10,11 +10,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material3.*
@@ -40,12 +42,16 @@ import com.platepk.maker.ui.PlateViewModel
 import com.platepk.maker.ui.canvas.PlateCanvas
 import com.platepk.maker.ui.theme.PlateColors
 import com.platepk.maker.ui.theme.appBackground
+import com.platepk.maker.ui.theme.softBlack
 import com.platepk.maker.ui.theme.subtitleGray
 import com.platepk.maker.util.addPressEffect
 import com.platepk.maker.util.formatTimestamp
 import com.platepk.maker.util.toByteArray
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import numberplatemaker.composeapp.generated.resources.Res
+import numberplatemaker.composeapp.generated.resources.ic_download
+import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,7 +60,8 @@ fun PreviewScreen(
     onBackClick: () -> Unit,
     navigateToHome: () -> Unit,
     isFromRegistration: Boolean = true,
-    plateId: String? = null
+    plateId: String? = null,
+    orderButton: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scope = rememberCoroutineScope()
@@ -105,7 +112,33 @@ fun PreviewScreen(
                 currentStep = 3,
                 totalSteps = 3,
                 onBackClick = onBackClick,
-                showSteps = false
+                showSteps = false,
+                actions = {
+                    IconButton(
+                        onClick = {
+                            viewModel.clearRegistrationFields()
+                            navigateToHome()
+                        }
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .addPressEffect {
+                                    viewModel.clearRegistrationFields()
+                                    navigateToHome()
+                                }
+                                .background(
+                                    color = MaterialTheme.colorScheme.surface,
+                                    shape = CircleShape
+                                )
+                                .clip(CircleShape)
+                            ,
+                            contentAlignment = Alignment.Center
+                        ){
+                            Icon(Icons.Default.Home, null, tint = MaterialTheme.colorScheme.onBackground)
+                        }
+                    }
+                }
             )
         },
         bottomBar = {
@@ -118,31 +151,18 @@ fun PreviewScreen(
                         .fillMaxWidth()
                         .padding(16.dp)
                         .height(56.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Box(
                         modifier = Modifier
-                            .width(60.dp)
-                            .fillMaxHeight()
+                            .size(56.dp)
                             .addPressEffect {
-                                viewModel.clearRegistrationFields()
-                                navigateToHome()
+                                scope.launch {
+                                    delay(150)
+                                    if (!uiState.exporting) showExportSheet = true
+                                }
                             }
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.surface),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Default.Home, null, tint = Color(0xFF555555))
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .addPressEffect {
-                                if (!uiState.exporting) showExportSheet = true
-                            }
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(CircleShape)
                             .background(if (uiState.exporting) Color.Gray else Color(0xFF0C8A53)),
                         contentAlignment = Alignment.Center
                     ) {
@@ -152,14 +172,42 @@ fun PreviewScreen(
                                 modifier = Modifier.size(20.dp)
                             )
                         } else {
-                            Text(
-                                "Download HD",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.surface
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_download),
+                                contentDescription = "Download",
+                                tint = Color.White
                             )
+
                         }
 
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .addPressEffect { orderButton() }
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFF0C8A53)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ShoppingCart,
+                                contentDescription = "Order",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "Order Plate",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
                     }
                 }
             }
@@ -297,7 +345,7 @@ fun PreviewScreen(
                         )
                         Divider(color = Color.Gray)
 
-                         InfoRow(
+                        InfoRow(
                             label = "Issued",
                             value = plateData?.let { formatTimestamp(it.timestamp) }
                                 ?: "20 May 2026"

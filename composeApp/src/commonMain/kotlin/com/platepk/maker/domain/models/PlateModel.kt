@@ -8,6 +8,7 @@ import org.jetbrains.compose.resources.DrawableResource
 data class PlateUiState(
     val currentStep: PlateStep = PlateStep.VehicleSelection,
     val savedPlates: List<RecentPlateItem> = emptyList(),
+    val orderState: OrderUiState = OrderUiState(),
     val exportStatus: ExportResult? = null,
     val selectedVehicle: VehicleType? = null,
     val selectedProvince: Province? = null,
@@ -133,4 +134,29 @@ data class PlateInputConfig(
     val minNumberCount: Int,
     val maxNumberCount: Int,
     val formatHint: String
+)
+
+enum class MaterialType {
+    PAINTED, EMBOSSED
+}
+enum class ShippingMethod { STANDARD, EXPRESS }
+
+data class OrderUiState(
+    val selectedMaterial: MaterialType = MaterialType.PAINTED,
+    val hasPlateFrame: Boolean = false,
+    val hasScrewsKit: Boolean = false,
+    val fullName: String = "",
+    val phone: String = "",
+    val address: String = "",
+    val email: String = "",
+    val province: String = "",
+    val city: String = "",
+    val area: String = "",
+    val completeAddress: String = "",
+    val postalCode: String = "",
+    val shippingMethod: ShippingMethod = ShippingMethod.STANDARD,
+    val isRegistrationCorrect: Boolean = false,
+    val isTermsAgreed: Boolean = false,
+    val isNonRefundableUnderstood: Boolean = false,
+    val showValidationErrors: Boolean = false
 )

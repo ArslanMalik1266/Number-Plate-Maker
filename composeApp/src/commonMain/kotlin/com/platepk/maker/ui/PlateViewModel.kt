@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.platepk.maker.data.local.entity.PlateEntity
 import com.platepk.maker.domain.models.ExportFormat
+import com.platepk.maker.domain.models.MaterialType
+import com.platepk.maker.domain.models.OrderUiState
 import com.platepk.maker.domain.models.PlateConfig
 import com.platepk.maker.domain.models.PlateInputConfig
 import com.platepk.maker.domain.models.PlateModel
@@ -13,6 +15,7 @@ import com.platepk.maker.domain.models.PlateUiState
 import com.platepk.maker.domain.models.Province
 import com.platepk.maker.domain.models.RecentPlateItem
 import com.platepk.maker.domain.models.SettingsUiState
+import com.platepk.maker.domain.models.ShippingMethod
 import com.platepk.maker.domain.models.VehicleType
 import com.platepk.maker.domain.usecases.DeleteAllPlatesUseCase
 import com.platepk.maker.domain.usecases.DeletePlateUseCase
@@ -453,6 +456,82 @@ class PlateViewModel(
                 _uiState.update { it.copy(exporting = false, exportError = e.message) }
                 println("DEBUG_EXPORT_HISTORY_ERROR: ${e.message}")
             }
+        }
+    }
+
+    fun onMaterialSelected(material: MaterialType) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                orderState = currentState.orderState.copy(
+                    selectedMaterial = material
+                )
+            )
+        }
+    }
+    fun toggleFrame(enabled: Boolean) {
+        _uiState.update { it.copy(orderState = it.orderState.copy(hasPlateFrame = enabled)) }
+    }
+
+    fun toggleScrews(enabled: Boolean) {
+        _uiState.update { it.copy(orderState = it.orderState.copy(hasScrewsKit = enabled)) }
+    }
+    fun loadHistoryPlateData(plateId: String) {
+        val plate = _uiState.value.savedPlates.find { it.id == plateId }
+        plate?.let {
+            _uiState.update { currentState ->
+                currentState.copy(
+                    frontImagePath = it.plateImageRes,
+                    backImagePath = it.plateImageBackRes
+                )
+            }
+        }
+    }
+    fun resetOrderState() {
+        _uiState.update { currentState ->
+            currentState.copy(
+                orderState = OrderUiState()
+            )
+        }
+    }
+
+    fun updateAddressDetails(newOrderState: OrderUiState) {
+        _uiState.update { it.copy(orderState = newOrderState) }
+    }
+    fun updateDeliverySpeed(Shipping: ShippingMethod) {
+        _uiState.update { it.copy(orderState = it.orderState.copy(shippingMethod = Shipping)) }
+    }
+    fun updateConfirmStatus(
+        isRegCorrect: Boolean = _uiState.value.orderState.isRegistrationCorrect,
+        isTermsAgreed: Boolean = _uiState.value.orderState.isTermsAgreed,
+        isNonRefundable: Boolean = _uiState.value.orderState.isNonRefundableUnderstood
+    ) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                orderState = currentState.orderState.copy(
+                    isRegistrationCorrect = isRegCorrect,
+                    isTermsAgreed = isTermsAgreed,
+                    isNonRefundableUnderstood = isNonRefundable
+                )
+            )
+        }
+    }
+
+    fun validateAndContinue(onSuccess: () -> Unit) {
+        val state = _uiState.value.orderState
+
+        // Check validation
+        val isFormValid = state.fullName.isNotBlank() &&
+                state.phone.isNotBlank() &&
+                state.province.isNotBlank() &&
+                state.city.isNotBlank() &&
+                state.completeAddress.isNotBlank()
+
+        if (isFormValid) {
+            _uiState.update { it.copy(orderState = it.orderState.copy(showValidationErrors = false)) }
+            onSuccess()
+        } else {
+            // Ab yeh error nahi aayega kyunki field define ho chuki hai
+            _uiState.update { it.copy(orderState = it.orderState.copy(showValidationErrors = true)) }
         }
     }
 

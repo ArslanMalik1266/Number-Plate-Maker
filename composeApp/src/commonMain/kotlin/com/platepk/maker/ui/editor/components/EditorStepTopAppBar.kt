@@ -3,6 +3,7 @@ package com.platepk.maker.ui.editor.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -35,11 +36,12 @@ fun EditorStepTopAppBar(
     totalSteps: Int,
     onBackClick: () -> Unit,
     showSteps: Boolean = true,
+    actions: @Composable RowScope.() -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
         CenterAlignedTopAppBar(
-            modifier = modifier,
+            modifier = modifier.padding(end = 8.dp),
             title = {
                 Text(
                     text = title,
@@ -76,6 +78,7 @@ fun EditorStepTopAppBar(
                         modifier = Modifier.padding(end = 20.dp)
                     )
                 }
+                actions()
             },
             colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                 containerColor = MaterialTheme.colorScheme.appBackground
