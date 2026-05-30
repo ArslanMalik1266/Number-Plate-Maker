@@ -17,5 +17,6 @@
         }
         object AddressDetail : Screen("address_detail")
         object OrderSummary : Screen("order_summary")
+        object OrderSuccess : Screen("order_success")
     }
 

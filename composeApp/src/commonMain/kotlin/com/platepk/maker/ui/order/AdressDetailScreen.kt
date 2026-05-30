@@ -11,9 +11,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -23,6 +28,9 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,11 +42,13 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.platepk.maker.domain.models.ShippingMethod
 import com.platepk.maker.ui.PlateViewModel
 import com.platepk.maker.ui.order.components.OrderStepTopAppBar
+import com.platepk.maker.ui.order.components.PhoneVisualTransformation
 import com.platepk.maker.ui.theme.appBackground
 import com.platepk.maker.ui.theme.redColor
 import com.platepk.maker.ui.theme.softBlack
@@ -123,29 +133,39 @@ fun AddressDetailScreen(
             item {
                 FieldLabel("PHONE NUMBER *")
                 CustomTextField(
-                    orderState.phone, "+92 3XX XXXX XXX",
-                    isError = showErrors && orderState.phone.isBlank(),
+                    value = orderState.phone,
+                    "3XX XXXX XXX",
+                    isError = showErrors && (orderState.phone.length != 10),
                     keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Phone,
+                        keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next
                     ),
                     keyboardActions = KeyboardActions(onNext = {
                         focusManager.moveFocus(
                             FocusDirection.Down
                         )
-                    })
-                ) { viewModel.updateAddressDetails(orderState.copy(phone = it)) }
+                    }),
+                    visualTransformation = PhoneVisualTransformation(),
+                    onValueChange = { newValue ->
+                        val filtered = newValue.filter { it.isDigit() }
+                        if (filtered.length <= 10) {
+                            val clean = if (filtered.startsWith("0")) filtered.drop(1) else filtered
+                            viewModel.updateAddressDetails(orderState.copy(phone = clean))
+                        }
+                    }
+                )
             }
-
             item {
                 FieldLabel("EMAIL")
-                CustomTextField(orderState.email, "optional",
+                CustomTextField(
+                    orderState.email, "optional",
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     keyboardActions = KeyboardActions(onNext = {
                         focusManager.moveFocus(
                             FocusDirection.Down
                         )
-                    })) {
+                    })
+                ) {
                     viewModel.updateAddressDetails(
                         orderState.copy(email = it)
                     )
@@ -164,16 +184,10 @@ fun AddressDetailScreen(
 
             item {
                 FieldLabel("PROVINCE *")
-                CustomTextField(
-                    orderState.province, "Select province",
-                    isError = showErrors && orderState.province.isBlank(),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                    keyboardActions = KeyboardActions(onNext = {
-                        focusManager.moveFocus(
-                            FocusDirection.Down
-                        )
-                    })
-                ) { viewModel.updateAddressDetails(orderState.copy(province = it)) }
+                ProvinceSpinner(
+                    selectedProvince = orderState.province,
+                    onProvinceSelected = { viewModel.updateAddressDetails(orderState.copy(province = it)) }
+                )
             }
 
             item {
@@ -196,13 +210,15 @@ fun AddressDetailScreen(
 
             item {
                 FieldLabel("AREA / TOWN")
-                CustomTextField(orderState.area,
+                CustomTextField(
+                    orderState.area,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     keyboardActions = KeyboardActions(onNext = {
                         focusManager.moveFocus(
                             FocusDirection.Down
                         )
-                    })) {
+                    })
+                ) {
                     viewModel.updateAddressDetails(
                         orderState.copy(
                             area = it
@@ -234,22 +250,19 @@ fun AddressDetailScreen(
                 )
             }
             item {
-                FieldLabel("DELIVERY SPEED *")
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    DeliveryOptionCard(
-                        title = "Standard Delivery (3-5 Days)",
-                        subtitle = "Free delivery on all orders.",
-                        isSelected = orderState.shippingMethod == ShippingMethod.STANDARD,
-                        onClick = { viewModel.updateDeliverySpeed(ShippingMethod.STANDARD) }
-                    )
-                    DeliveryOptionCard(
-                        title = "Express Delivery (1-2 Days)",
-                        subtitle = "Fast track your order for a small fee.",
-                        isSelected = orderState.shippingMethod == ShippingMethod.EXPRESS,
-                        onClick = { viewModel.updateDeliverySpeed(ShippingMethod.EXPRESS) }
-                    )
-                }
+                FieldLabel("SHIPPING METHOD *")
             }
+
+            items(orderState.availableShippingMethods) { method ->
+                DeliveryOptionCard(
+                    title = method.title,
+                    subtitle = "Delivery within ${method.deliveryTime} days",
+                    isSelected = orderState.selectedShippingMethod?.id == method.id,
+                    onClick = { viewModel.onShippingMethodSelected(method) }
+                )
+
+            }
+
             item {
                 Text(
                     text = "VEHICLE INFO - AUTO-FILLED",
@@ -319,6 +332,7 @@ fun CustomTextField(
     isError: Boolean = false,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
     onValueChange: (String) -> Unit,
 ) {
     OutlinedTextField(
@@ -328,6 +342,7 @@ fun CustomTextField(
         modifier = Modifier.fillMaxWidth(),
         minLines = minLines,
         isError = isError,
+        visualTransformation = visualTransformation,
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
         shape = RoundedCornerShape(12.dp),
@@ -385,5 +400,60 @@ fun ReadOnlyInfoRow(label: String, value: String) {
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.softBlack
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProvinceSpinner(
+    selectedProvince: String,
+    onProvinceSelected: (String) -> Unit
+) {
+    val provinces = listOf(
+        "Punjab",
+        "Sindh",
+        "Khyber Pakhtunkhwa",
+        "Balochistan",
+        "Islamabad",
+        "Azad Kashmir",
+        "Gilgit-Baltistan"
+    )
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = selectedProvince,
+            onValueChange = {},
+            readOnly = true,
+            placeholder = { Text("Select province", fontSize = 14.sp) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(),
+            shape = RoundedCornerShape(12.dp),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
+            )
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            provinces.forEach { province ->
+                DropdownMenuItem(
+                    text = { Text(province) },
+                    onClick = {
+                        onProvinceSelected(province)
+                        expanded = false
+                    }
+                )
+            }
+        }
     }
 }

@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.platepk.maker.domain.models.ExportFormat
+import com.platepk.maker.domain.models.MaterialType
 import com.platepk.maker.ui.PlateViewModel
 import com.platepk.maker.ui.canvas.PlateCanvas
 import com.platepk.maker.ui.theme.PlateColors
@@ -114,6 +115,16 @@ fun PreviewScreen(
                 onBackClick = onBackClick,
                 showSteps = false,
                 actions = {
+                    // Painted / Embossed style toggle.
+                    // Reads the live material from whichever plate is on screen
+                    // (front is the source of truth — back is kept in sync by the VM).
+                    val activeMaterial = uiState.frontPlate?.config?.materialType
+                        ?: uiState.orderState.selectedMaterial
+                    PlateStyleToggle(
+                        selected = activeMaterial,
+                        onSelected = { viewModel.setRegistrationMaterial(it) }
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
                     IconButton(
                         onClick = {
                             viewModel.clearRegistrationFields()
@@ -527,5 +538,70 @@ fun SavedToRecentsIndicator(
                 fontWeight = FontWeight.Medium
             )
         }
+    }
+}
+/**
+ * Compact segmented control for the Preview toolbar.
+ * Lets the user flip the rendered plate between PAINTED (flat ink) and
+ * EMBOSSED (raised letter look) in one tap.
+ *
+ * Sits to the LEFT of the Home button so the eye reads:
+ *   [ Painted | Embossed ]  ( Home )
+ */
+@Composable
+private fun PlateStyleToggle(
+    selected: MaterialType,
+    onSelected: (MaterialType) -> Unit
+) {
+    val activeBg = Color(0xFF0C8A53)        // brand green, used elsewhere on this screen
+    val trackBg = MaterialTheme.colorScheme.surface
+    val borderColor = Color(0xFFE5E2DA)
+
+    Row(
+        modifier = Modifier
+            .height(36.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(trackBg)
+            .border(1.dp, borderColor, RoundedCornerShape(18.dp))
+            .padding(3.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        StyleSegment(
+            label = "Painted",
+            active = selected == MaterialType.PAINTED,
+            activeBg = activeBg,
+            onClick = { onSelected(MaterialType.PAINTED) }
+        )
+        StyleSegment(
+            label = "Embossed",
+            active = selected == MaterialType.EMBOSSED,
+            activeBg = activeBg,
+            onClick = { onSelected(MaterialType.EMBOSSED) }
+        )
+    }
+}
+
+@Composable
+private fun StyleSegment(
+    label: String,
+    active: Boolean,
+    activeBg: Color,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxHeight()
+            .clip(RoundedCornerShape(15.dp))
+            .background(if (active) activeBg else Color.Transparent)
+            .addPressEffect { onClick() }
+            .padding(horizontal = 10.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            color = if (active) Color.White else MaterialTheme.colorScheme.subtitleGray
+        )
     }
 }

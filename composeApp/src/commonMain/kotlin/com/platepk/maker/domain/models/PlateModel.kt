@@ -10,6 +10,7 @@ data class PlateUiState(
     val savedPlates: List<RecentPlateItem> = emptyList(),
     val orderState: OrderUiState = OrderUiState(),
     val exportStatus: ExportResult? = null,
+    val isSubmitting: Boolean = false,
     val selectedVehicle: VehicleType? = null,
     val selectedProvince: Province? = null,
     val registrationNumber: String = "",
@@ -58,8 +59,8 @@ data class PlateConfig(
     val CityTextAlignment : TextAlignment = TextAlignment.NONE,
     val provinceCodeAlignment : TextAlignment = TextAlignment.NONE,
     val RegistrationTextAlignment : TextAlignment = TextAlignment.NONE,
-
-    )
+    val materialType: MaterialType = MaterialType.PAINTED,
+)
 
 data class PlateDimensions(
     val width: Float,
@@ -142,6 +143,12 @@ enum class MaterialType {
 enum class ShippingMethod { STANDARD, EXPRESS }
 
 data class OrderUiState(
+    val availablePlateTypes: List<PlateType> = emptyList(),
+    val availableShippingMethods: List<ShippingMethodDomain> = emptyList(),
+    val availableAddsOns: List<AddsOn> = emptyList(),
+    val selectedPlateType: PlateType? = null,
+    val selectedShippingMethod: ShippingMethodDomain? = null,
+    val selectedAddsOns: List<AddsOn> = emptyList(),
     val selectedMaterial: MaterialType = MaterialType.PAINTED,
     val hasPlateFrame: Boolean = false,
     val hasScrewsKit: Boolean = false,

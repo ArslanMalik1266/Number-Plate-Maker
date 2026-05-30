@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +16,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -68,6 +71,8 @@ fun PlateTypeScreen(
             viewModel.loadHistoryPlateData(plateId!!)
         }
     }
+
+
 
     Scaffold(
         topBar = {
@@ -126,29 +131,22 @@ fun PlateTypeScreen(
 
             // Material Cards Section
             item {
-                Row(
+                LazyRow(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(horizontal = 0.dp)
                 ) {
-                    MaterialSelectionCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Painted",
-                        description = "Sealed paint · aluminium",
-                        price = "Rs. 800",
-                        imagePath = uiState.frontImagePath,
-                        isSelected = orderState.selectedMaterial == MaterialType.PAINTED,
-                        onClick = { viewModel.onMaterialSelected(MaterialType.PAINTED) }
-                    )
-                    MaterialSelectionCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Embossed",
-                        description = "Raised chars · gov-spec",
-                        price = "Rs. 1,500",
-                        isPopular = true,
-                        imagePath = uiState.frontImagePath,
-                        isSelected = orderState.selectedMaterial == MaterialType.EMBOSSED,
-                        onClick = { viewModel.onMaterialSelected(MaterialType.EMBOSSED) }
-                    )
+                    items(uiState.orderState.availablePlateTypes) { plateType ->
+                        MaterialSelectionCard(
+                            modifier = Modifier.width(160.dp),
+                            title = plateType.title,
+                            description = plateType.description ?: "",
+                            price = "Rs. ${plateType.price.toInt()}",
+                            imagePath = viewModel.getImagePathForPlateType(plateType.title),
+                            isSelected = orderState.selectedPlateType?.id == plateType.id,
+                            onClick = { viewModel.onPlateTypeSelected(plateType) }
+                        )
+                    }
                 }
             }
 
@@ -163,23 +161,16 @@ fun PlateTypeScreen(
             }
 
             // Add-ons List
-            item {
+            items(uiState.orderState.availableAddsOns) { addon ->
                 AddonRow(
-                    title = "Plate Frame",
-                    price = "+ Rs. 400",
-                    isChecked = orderState.hasPlateFrame,
-                    onCheckedChange = { viewModel.toggleFrame(it) }
+                    title = addon.title,
+                    price = "+ Rs. ${addon.price.toInt()}",
+                    isChecked = uiState.orderState.selectedAddsOns.contains(addon),
+                    onCheckedChange = { isChecked ->
+                        viewModel.toggleAddon(addon, isChecked)
+                    }
                 )
-            }
-
-            item {
                 Spacer(modifier = Modifier.height(12.dp))
-                AddonRow(
-                    title = "Screws & Mounting Kit",
-                    price = "+ Rs. 200",
-                    isChecked = orderState.hasScrewsKit,
-                    onCheckedChange = { viewModel.toggleScrews(it) }
-                )
             }
 
         }
@@ -202,7 +193,7 @@ fun MaterialSelectionCard(
     Box(
         modifier = modifier
             .width(160.dp)
-            .height(230.dp)
+            .height(200.dp)
             .addPressEffect { onClick() }
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surface)
@@ -256,7 +247,7 @@ fun MaterialSelectionCard(
             }
             Column {
                 Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Text(description, fontSize = 12.sp, color = Color.Gray)
+                Text(description, fontSize = 12.sp, color = Color.Gray, lineHeight = 12.sp)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     price,

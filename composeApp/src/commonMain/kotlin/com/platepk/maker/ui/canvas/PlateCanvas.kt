@@ -975,7 +975,7 @@ private fun DrawScope.drawPunjabBikeFront(
             pivot = Offset(regX + regText.size.width / 2f, regY + regText.size.height / 2f)
         )
     }) {
-        drawText(regText, topLeft = Offset(regX, regY))
+        drawPlateRegistration(regText, Offset(regX, regY), config)
     }
 
 }
@@ -1068,7 +1068,7 @@ private fun DrawScope.drawPunjabBikeRear(
     withTransform({
         scale(scaleX = 1.0f, scaleY = scaleY, pivot = Offset(w / 2, h / 2))
     }) {
-        drawText(regLayoutResult, topLeft = Offset(regX, regY))
+        drawPlateRegistration(regLayoutResult, Offset(regX, regY), config)
     }
 }
 
@@ -1187,7 +1187,7 @@ private fun DrawScope.drawPunjabCarPlate(
             )
         )
     }) {
-        drawText(regLayoutResult, topLeft = Offset(regX, regY))
+        drawPlateRegistration(regLayoutResult, Offset(regX, regY), config)
     }
 }
 
@@ -1289,7 +1289,7 @@ private fun DrawScope.drawKpkBikeFront(
             pivot = Offset(regX + regText.size.width / 2f, regY + regText.size.height / 2f)
         )
     }) {
-        drawText(regText, topLeft = Offset(regX, regY))
+        drawPlateRegistration(regText, Offset(regX, regY), config)
     }
 }
 
@@ -1401,7 +1401,7 @@ private fun DrawScope.drawKpkBikeRear(
     withTransform({
         scale(scaleX = 1.0f, scaleY = 1.3f, pivot = Offset(w / 2f, gapCenterY))
     }) {
-        drawText(regLayoutResult, topLeft = Offset(regX, regY))
+        drawPlateRegistration(regLayoutResult, Offset(regX, regY), config)
     }
 }
 
@@ -1522,7 +1522,7 @@ private fun DrawScope.drawKpkCarPlate(
             pivot = Offset(startX, textY + finalLayout1.size.height / 2f)
         )
     }) {
-        drawText(finalLayout1, topLeft = Offset(startX, textY + verticalShift))
+        drawPlateRegistration(finalLayout1, Offset(startX, textY + verticalShift), config)
     }
 
     // 2. Logo (Original shape maintain karega)
@@ -1542,7 +1542,7 @@ private fun DrawScope.drawKpkCarPlate(
             pivot = Offset(secondPartX, textY + finalLayout2.size.height / 2f)
         )
     }) {
-        drawText(finalLayout2, topLeft = Offset(secondPartX, textY + verticalShift))
+        drawPlateRegistration(finalLayout2, Offset(secondPartX, textY + verticalShift), config)
     }
 }
 
@@ -1645,7 +1645,7 @@ private fun DrawScope.drawBalochistanBikeFront(
             pivot = Offset(regX + regText.size.width / 2f, regY + regText.size.height / 2f)
         )
     }) {
-        drawText(regText, topLeft = Offset(regX, regY))
+        drawPlateRegistration(regText, Offset(regX, regY), config)
     }
 }
 
@@ -1757,7 +1757,7 @@ private fun DrawScope.drawBalochistanBikeRear(
     withTransform({
         scale(scaleX = 1.0f, scaleY = 1.3f, pivot = Offset(w / 2f, gapCenterY))
     }) {
-        drawText(regLayoutResult, topLeft = Offset(regX, regY))
+        drawPlateRegistration(regLayoutResult, Offset(regX, regY), config)
     }
 }
 
@@ -1878,7 +1878,7 @@ private fun DrawScope.drawBalochistanCarPlate(
             pivot = Offset(startX, textY + finalLayout1.size.height / 2f)
         )
     }) {
-        drawText(finalLayout1, topLeft = Offset(startX, textY + verticalShift))
+        drawPlateRegistration(finalLayout1, Offset(startX, textY + verticalShift), config)
     }
 
     // 2. Logo (Original Shape, No Offset)
@@ -1898,7 +1898,7 @@ private fun DrawScope.drawBalochistanCarPlate(
             pivot = Offset(secondPartX, textY + finalLayout2.size.height / 2f)
         )
     }) {
-        drawText(finalLayout2, topLeft = Offset(secondPartX, textY + verticalShift))
+        drawPlateRegistration(finalLayout2, Offset(secondPartX, textY + verticalShift), config)
     }
 }
 
@@ -2029,7 +2029,7 @@ private fun DrawScope.drawSindhBikeFront(
             )
         )
     }) {
-        drawText(finalLayout1, topLeft = Offset(startX, textY))
+        drawPlateRegistration(finalLayout1, Offset(startX, textY), config)
     }
 
     // Draw Logo
@@ -2052,7 +2052,7 @@ private fun DrawScope.drawSindhBikeFront(
             )
         )
     }) {
-        drawText(finalLayout2, topLeft = Offset(secondPartX, textY))
+        drawPlateRegistration(finalLayout2, Offset(secondPartX, textY), config)
     }
 }
 
@@ -2181,7 +2181,7 @@ private fun DrawScope.drawSindhBikeRear(
     withTransform({
         scale(scaleX = 1.0f, scaleY = scaleY, pivot = Offset(w / 2, h / 2))
     }) {
-        drawText(regLayoutResult, topLeft = Offset(regX, regY))
+        drawPlateRegistration(regLayoutResult, Offset(regX, regY), config)
     }
 }
 
@@ -2322,7 +2322,7 @@ private fun DrawScope.drawSindhCarPlate(
             pivot = Offset(startX, textY + finalLayout1.size.height / 2f)
         )
     }) {
-        drawText(finalLayout1, topLeft = Offset(startX, textY + verticalShift))
+        drawPlateRegistration(finalLayout1, Offset(startX, textY + verticalShift), config)
     }
     val logoX = startX + finalLayout1.size.width + finalInternalGap
     translate(left = logoX, top = logoY) {
@@ -2338,7 +2338,7 @@ private fun DrawScope.drawSindhCarPlate(
             pivot = Offset(secondPartX, textY + finalLayout2.size.height / 2f)
         )
     }) {
-        drawText(finalLayout2, topLeft = Offset(secondPartX, textY + verticalShift))
+        drawPlateRegistration(finalLayout2, Offset(secondPartX, textY + verticalShift), config)
     }
 }
 
@@ -2482,7 +2482,7 @@ private fun DrawScope.drawAjkBikeFront(
     withTransform({
         scale(1.0f, 1.3f, pivot = Offset(startX, textY + fLayout1.size.height / 2f))
     }) {
-        drawText(fLayout1, topLeft = Offset(startX, textY + verticalShift))
+        drawPlateRegistration(fLayout1, Offset(startX, textY + verticalShift), config)
     }
 
     val dotX = startX + fLayout1.size.width + finalInternalGap
@@ -2499,7 +2499,7 @@ private fun DrawScope.drawAjkBikeFront(
     withTransform({
         scale(1.0f, 1.3f, pivot = Offset(secondPartX, textY + fLayout2.size.height / 2f))
     }) {
-        drawText(fLayout2, topLeft = Offset(secondPartX, textY + verticalShift))
+        drawPlateRegistration(fLayout2, Offset(secondPartX, textY + verticalShift), config)
     }
 }
 
@@ -2619,7 +2619,7 @@ private fun DrawScope.drawAjkBikeRear(
             pivot = Offset(line1X + fLayout1.size.width / 2f, line1Y + fLayout1.size.height / 2f)
         )
     }) {
-        drawText(fLayout1, topLeft = Offset(line1X, line1Y))
+        drawPlateRegistration(fLayout1, Offset(line1X, line1Y), config)
     }
 
     // Line 2
@@ -2632,7 +2632,7 @@ private fun DrawScope.drawAjkBikeRear(
             pivot = Offset(line2X + fLayout2.size.width / 2f, line2Y + fLayout2.size.height / 2f)
         )
     }) {
-        drawText(fLayout2, topLeft = Offset(line2X, line2Y))
+        drawPlateRegistration(fLayout2, Offset(line2X, line2Y), config)
     }
 }
 
@@ -2775,7 +2775,7 @@ private fun DrawScope.drawAjkCarPlate(
     withTransform({
         scale(1.0f, 1.3f, pivot = Offset(startX, textY + fLayout1.size.height / 2f))
     }) {
-        drawText(fLayout1, topLeft = Offset(startX, textY + verticalShift))
+        drawPlateRegistration(fLayout1, Offset(startX, textY + verticalShift), config)
     }
 
     val dotX = startX + fLayout1.size.width + finalInternalGap
@@ -2792,7 +2792,7 @@ private fun DrawScope.drawAjkCarPlate(
     withTransform({
         scale(1.0f, 1.3f, pivot = Offset(secondPartX, textY + fLayout2.size.height / 2f))
     }) {
-        drawText(fLayout2, topLeft = Offset(secondPartX, textY + verticalShift))
+        drawPlateRegistration(fLayout2, Offset(secondPartX, textY + verticalShift), config)
     }
 }
 
@@ -2894,7 +2894,7 @@ private fun DrawScope.drawGbBikeFront(
             pivot = Offset(regX + regLayoutResult.size.width / 2f, h / 2f)
         )
     }) {
-        drawText(regLayoutResult, topLeft = Offset(regX, regY))
+        drawPlateRegistration(regLayoutResult, Offset(regX, regY), config)
     }
 }
 
@@ -3009,7 +3009,7 @@ private fun DrawScope.drawGbBikeRear(
             pivot = Offset(regX + regLayoutResult.size.width / 2f, h / 2f)
         )
     }) {
-        drawText(regLayoutResult, topLeft = Offset(regX, regY))
+        drawPlateRegistration(regLayoutResult, Offset(regX, regY), config)
     }
 }
 
@@ -3135,7 +3135,7 @@ private fun DrawScope.drawGbCarPlate(
     withTransform({
         scale(1.0f, 1.2f, pivot = Offset(startX, textY + fLayout1.size.height / 2f))
     }) {
-        drawText(fLayout1, topLeft = Offset(startX, textY))
+        drawPlateRegistration(fLayout1, Offset(startX, textY), config)
     }
 
     // Dash (Replacement for Dot)
@@ -3153,7 +3153,7 @@ private fun DrawScope.drawGbCarPlate(
     withTransform({
         scale(1.0f, 1.2f, pivot = Offset(secondPartX, textY + fLayout2.size.height / 2f))
     }) {
-        drawText(fLayout2, topLeft = Offset(secondPartX, textY))
+        drawPlateRegistration(fLayout2, Offset(secondPartX, textY), config)
     }
 }
 
@@ -3292,7 +3292,7 @@ private fun DrawScope.drawIslamabadBikeFront(
     withTransform({
         scale(1.0f, 1.4f, pivot = Offset(startX, textY + fL1.size.height / 2f))
     }) {
-        drawText(fL1, topLeft = Offset(startX, textY))
+        drawPlateRegistration(fL1, Offset(startX, textY), config)
     }
 
     val dashX = startX + fL1.size.width + fGap
@@ -3303,7 +3303,7 @@ private fun DrawScope.drawIslamabadBikeFront(
     withTransform({
         scale(1.0f, 1.4f, pivot = Offset(secondPartX, textY + fL2.size.height / 2f))
     }) {
-        drawText(fL2, topLeft = Offset(secondPartX, textY))
+        drawPlateRegistration(fL2, Offset(secondPartX, textY), config)
     }
 }
 
@@ -3439,14 +3439,14 @@ private fun DrawScope.drawIslamabadBikeRear(
     withTransform({
         scale(1.0f, 1.0f, pivot = Offset(row1X, row1Y + fL1.size.height / 2f))
     }) {
-        drawText(fL1, topLeft = Offset(row1X, row1Y))
+        drawPlateRegistration(fL1, Offset(row1X, row1Y), config)
     }
 
 // Draw Row 2
     withTransform({
         scale(1.0f, 1.0f, pivot = Offset(row2X, row2Y + fL2.size.height / 2f))
     }) {
-        drawText(fL2, topLeft = Offset(row2X, row2Y))
+        drawPlateRegistration(fL2, Offset(row2X, row2Y), config)
     }
 }
 
@@ -3599,7 +3599,7 @@ private fun DrawScope.drawIslamabadCarPlate(
     withTransform({
         scale(1.0f, 1.4f, pivot = Offset(startX, textY + fL1.size.height / 2f))
     }) {
-        drawText(fL1, topLeft = Offset(startX, textY))
+        drawPlateRegistration(fL1, Offset(startX, textY), config)
     }
 
     val dashX = startX + fL1.size.width + fGap
@@ -3611,7 +3611,7 @@ private fun DrawScope.drawIslamabadCarPlate(
     withTransform({
         scale(1.0f, 1.4f, pivot = Offset(secondPartX, textY + fL2.size.height / 2f))
     }) {
-        drawText(fL2, topLeft = Offset(secondPartX, textY))
+        drawPlateRegistration(fL2, Offset(secondPartX, textY), config)
     }
 }
 
@@ -3659,35 +3659,91 @@ private fun DrawScope.drawDiplomaticPlate(
             )
         )
     }) {
-        drawText(finalRegText, topLeft = Offset(regX, regY))
+        drawPlateRegistration(finalRegText, Offset(regX, regY), config)
     }
 }
 
 
 
 
-private fun DrawScope.drawEmbossedText(
+/**
+ * Single entry point for drawing the registration number on a plate.
+ *
+ * Painted -> flat text (existing behaviour).
+ * Embossed -> stacked layers that simulate a raised letter:
+ *   1. Soft drop shadow (3 stacked passes at increasing offset / decreasing alpha)
+ *   2. Hard "lip" shadow just below-right of the letter
+ *   3. Bright highlight above-left of the letter
+ *   4. Main letter face on top
+ *
+ * All offsets scale with the line height so the effect looks proportionate on
+ * a tiny bike plate as well as a wide car plate. Designed to be a drop-in
+ * replacement for `drawPlateRegistration(regText, Offset(x, y), config)` inside the
+ * existing `withTransform { scale(1f, 1.3f-1.4f, ...) }` blocks, so the
+ * vertical-stretch logic continues to work identically for both modes.
+ */
+internal fun DrawScope.drawPlateRegistration(
     textLayoutResult: androidx.compose.ui.text.TextLayoutResult,
     topLeft: Offset,
-    shadowOffsetPx: Float,
-    scaleX: Float = 1.0f,
-    scaleY: Float = 1.0f,
-    pivotOffset: Offset = topLeft
+    config: com.platepk.maker.domain.models.PlateConfig
 ) {
-    // Shadow layer
-    withTransform({
-        scale(scaleX = scaleX, scaleY = scaleY, pivot = pivotOffset)
-    }) {
-        drawText(
-            textLayoutResult,
-            topLeft = Offset(topLeft.x + shadowOffsetPx, topLeft.y + shadowOffsetPx),
-            alpha = 0.45f
-        )
-    }
-    // Main text
-    withTransform({
-        scale(scaleX = scaleX, scaleY = scaleY, pivot = pivotOffset)
-    }) {
-        drawText(textLayoutResult, topLeft = topLeft)
+    when (config.materialType) {
+        com.platepk.maker.domain.models.MaterialType.PAINTED -> {
+            drawText(textLayoutResult, topLeft = topLeft)
+        }
+        com.platepk.maker.domain.models.MaterialType.EMBOSSED -> {
+            drawEmbossedRegistration(textLayoutResult, topLeft)
+        }
     }
 }
+
+/**
+ * The actual emboss recipe — extracted so it can be tuned in one place.
+ * Offsets are derived from the rendered line height so the effect scales
+ * with whatever font size the caller measured the text at.
+ */
+/**
+ * The actual emboss recipe — extracted so it can be tuned in one place.
+ * Offsets are derived from the rendered line height so the effect scales
+ * with whatever font size the caller measured the text at.
+ */
+private fun DrawScope.drawEmbossedRegistration(
+    textLayoutResult: androidx.compose.ui.text.TextLayoutResult,
+    topLeft: Offset
+) {
+    // Hard cap at 3px so the effect never becomes a blob on large back-plate fonts.
+    // Minimum 1px so tiny bike plates still show something.
+    val unit = (textLayoutResult.size.height * 0.014f).coerceIn(1f, 3f)
+
+    // Layer 1 — distant block shadow (plate surface shadow).
+    // Subtle — just enough to imply the letter is lifted off the surface.
+    drawText(
+        textLayoutResult,
+        topLeft = Offset(topLeft.x + unit * 2f, topLeft.y + unit * 2f),
+        color = Color.Black,
+        alpha = 0.10f
+    )
+
+    // Layer 2 — bottom-right extrusion wall (dark side face of the raised letter).
+    // This is what reads as the "depth" of the extrusion.
+    // Alpha kept moderate so it tints, not dominates.
+    drawText(
+        textLayoutResult,
+        topLeft = Offset(topLeft.x + unit * 1f, topLeft.y + unit * 1f),
+        color = Color.Black,
+        alpha = 0.40f
+    )
+
+    // Layer 3 — top-left extrusion wall (light side face catching the light).
+    // Kept subtle — a hint of brightness, not a white glow.
+    drawText(
+        textLayoutResult,
+        topLeft = Offset(topLeft.x - unit * 0.6f, topLeft.y - unit * 0.6f),
+        color = Color.White,
+        alpha = 0.35f
+    )
+
+    // Layer 4 — letter face on top. Full color, no offset.
+    drawText(textLayoutResult, topLeft = topLeft)
+}
+

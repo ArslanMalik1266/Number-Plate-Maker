@@ -14,6 +14,7 @@ import com.platepk.maker.ui.editor.VehicleTypeScreen
 import com.platepk.maker.ui.history.HistoryScreen
 import com.platepk.maker.ui.home.HomeScreen
 import com.platepk.maker.ui.order.AddressDetailScreen
+import com.platepk.maker.ui.order.OrderSuccessScreen
 import com.platepk.maker.ui.order.PlateTypeScreen
 import com.platepk.maker.ui.order.ReviewOrderScreen
 import com.platepk.maker.ui.settings.SettingsScreen
@@ -187,9 +188,22 @@ fun NavGraphBuilder.appNavigation(
     composable(Screen.OrderSummary.route) {
         ReviewOrderScreen(
             onBackClick = { navController.popBackStack() },
-            onContinueClick = {},
+            onContinueClick = {
+                navController.navigate(Screen.OrderSuccess.route)
+            },
             viewModel = viewModel
         )
+    }
+    composable(Screen.OrderSuccess.route) {
+        OrderSuccessScreen(
+            onNavigateHome = {
+                viewModel.resetOrderState()
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(Screen.Home.route) { inclusive = true }
+                }
+            }
+        )
+
     }
 }
 

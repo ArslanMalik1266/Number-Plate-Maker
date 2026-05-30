@@ -1,6 +1,7 @@
 package com.platepk.maker.ui.order
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -62,6 +64,7 @@ fun ReviewOrderScreen(
             )
         },
         bottomBar = {
+            val isLoading = uiState.isSubmitting
             val buttonColor = if (isAllConfirmed) Color(0xFF0C8A53) else Color.LightGray
             Row(
                 modifier = Modifier
@@ -74,17 +77,31 @@ fun ReviewOrderScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
-                        .addPressEffect { onContinueClick() }
+                        .clickable {
+                            if (isAllConfirmed && !isLoading) {
+                                viewModel.submitOrder(onNavigateSuccess = {
+                                    onContinueClick()
+                                })
+                            }
+                        }
                         .clip(RoundedCornerShape(12.dp))
                         .background(buttonColor),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = if (isAllConfirmed) "Place Order" else "Confirm checks above",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            text = if (isAllConfirmed) "Place Order" else "Confirm checks above",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
                 }
             }
 
@@ -101,7 +118,11 @@ fun ReviewOrderScreen(
 
             item {
                 Text("Order summary", fontSize = 20.sp, fontWeight = FontWeight.Black)
-                Text("Check everything before placing the order.", fontSize = 14.sp, color = Color.Gray)
+                Text(
+                    "Check everything before placing the order.",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
             }
             item {
                 OrderSummaryCard(
@@ -237,7 +258,12 @@ fun OrderSummaryCard(
 
             // Details Column
             Column {
-                Text("REGISTRATION", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                Text(
+                    "REGISTRATION",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Gray
+                )
                 Text("AD DS", fontSize = 18.sp, fontWeight = FontWeight.Black)
                 Text("Premium Embossed Metal", fontSize = 12.sp, color = Color.Gray)
                 Text("Quantity: 2 (Front + Back)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
@@ -261,7 +287,11 @@ fun DeliveryInfoCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                alpha = 0.3f
+            )
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             // Header Section
@@ -312,14 +342,22 @@ fun PricingSection() {
             PricingRow("Add-ons", "Rs. 400")
             PricingRow("Delivery · 1–2 days", "Rs. 600")
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Color.LightGray.copy(alpha = 0.5f))
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 8.dp),
+                color = Color.LightGray.copy(alpha = 0.5f)
+            )
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Total", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Text("Rs. 2,500", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF0C8A53))
+                Text(
+                    "Rs. 2,500",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = Color(0xFF0C8A53)
+                )
             }
         }
     }
