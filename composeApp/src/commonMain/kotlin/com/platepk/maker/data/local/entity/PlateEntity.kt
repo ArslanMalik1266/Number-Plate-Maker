@@ -13,6 +13,8 @@ data class PlateEntity(
     val issuedDate: Long,
     val frontImagePath: String?,
     val backImagePath: String?,
+    val embossedFrontImagePath: String? = null,
+    val embossedBackImagePath: String? = null,
     val pdfFilePath: String?,
     val exportFormat: String
 )

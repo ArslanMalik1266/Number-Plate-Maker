@@ -71,7 +71,16 @@ fun PlateTypeScreen(
             viewModel.loadHistoryPlateData(plateId!!)
         }
     }
-
+    LaunchedEffect(uiState.orderState.availablePlateTypes) {
+        if (orderState.selectedPlateType == null && uiState.orderState.availablePlateTypes.isNotEmpty()) {
+            val paintedOption = uiState.orderState.availablePlateTypes.find {
+                it.title.equals("PAINTED", ignoreCase = true)
+            }
+            paintedOption?.let {
+                viewModel.onPlateTypeSelected(it)
+            }
+        }
+    }
 
 
     Scaffold(

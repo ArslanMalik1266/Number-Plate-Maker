@@ -17,5 +17,5 @@ data class OrderRequest(
     val vehicle_province: String,
     val plate_type: String?,
     val shipping_method: String?,
-    val add_ons: List<String>
+    val add_ons: List<String>,
 )

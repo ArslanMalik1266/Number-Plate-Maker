@@ -37,7 +37,9 @@ import com.platepk.maker.domain.usecases.ToggleThemeUseCase
 import com.platepk.maker.mapper.toDomain
 import com.platepk.maker.mapper.toEntity
 import com.platepk.maker.util.PlatformClock
+import com.platepk.maker.util.getBytesFromPath
 import com.platepk.maker.util.readFileBytes
+import io.ktor.util.encodeBase64
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -68,6 +70,7 @@ class PlateViewModel(
     val isLoading = _isLoading.asStateFlow()
 
     private var isDataFetched = false
+
 
     private val currentConfig: PlateInputConfig?
         get() {
@@ -306,8 +309,15 @@ class PlateViewModel(
         }
     }
 
-    fun savePlateImages(frontBytes: ByteArray, backBytes: ByteArray) {  // ✅ ByteArray
+    fun savePlateImages(
+        frontBytes: ByteArray,
+        backBytes: ByteArray,
+        embossedFrontBytes: ByteArray,
+        embossedBackBytes: ByteArray
+
+    ) {
         val currentState = _uiState.value
+        if (currentState.isAlreadySaved) return
         val vehicle = currentState.selectedVehicle ?: return
         val province = currentState.selectedProvince ?: return
         val timestamp = clock.getCurrentMillis()
@@ -320,8 +330,22 @@ class PlateViewModel(
             val backPath = exportPlateUseCase.savePlateLocally(
                 backBytes, "${regNumber}_${timestamp}_back"
             )
+            val embossedFrontPath = exportPlateUseCase.savePlateLocally(
+                embossedFrontBytes, "${regNumber}_${timestamp}_embossed_front"
+            )
+            val embossedBackPath = exportPlateUseCase.savePlateLocally(
+                embossedBackBytes, "${regNumber}_${timestamp}_embossed_back"
+            )
 
-            if (frontPath.isEmpty() || backPath.isEmpty()) return@launch
+            println("DEBUG_SAVED: frontPath=$frontPath")
+            println("DEBUG_SAVED: backPath=$backPath")
+            println("DEBUG_SAVED: embossedFront=$embossedFrontPath")
+            println("DEBUG_SAVED: embossedBack=$embossedBackPath")
+
+            if (frontPath.isEmpty() || backPath.isEmpty()) {
+                println("DEBUG_SAVED: EARLY RETURN — front or back empty!")
+                return@launch
+            }
 
             val newPlate = RecentPlateItem(
                 id = "0",
@@ -331,11 +355,19 @@ class PlateViewModel(
                 timestamp = timestamp,
                 plateImageRes = frontPath,
                 plateImageBackRes = backPath,
+                embossedFrontImagePath = embossedFrontPath,
+                embossedBackImagePath = embossedBackPath,
                 pdfPath = null
             )
             savePlateUseCase(newPlate.toEntity())
             _uiState.update {
-                it.copy(frontImagePath = frontPath, backImagePath = backPath)
+                it.copy(
+                    isAlreadySaved = true,
+                    frontImagePath = frontPath,
+                    backImagePath = backPath,
+                    embossedFrontImagePath = embossedFrontPath,
+                    embossedBackImagePath = embossedBackPath
+                )
             }
             println("DEBUG_SAVED: front=$frontPath back=$backPath")
         }
@@ -513,28 +545,41 @@ class PlateViewModel(
     }
 
     fun loadHistoryPlateData(plateId: String) {
-        val plate = _uiState.value.savedPlates.find { it.id == plateId }
-        plate?.let {
+        // 1. Pehle saved plates se data find karo
+        val plateItem = _uiState.value.savedPlates.find { it.id == plateId }
+
+        plateItem?.let { item ->
             _uiState.update { currentState ->
                 currentState.copy(
-                    frontImagePath = it.plateImageRes,
-                    backImagePath = it.plateImageBackRes
+                    registrationNumber = item.plateNumber,
+                    // 2. Images update karo (Jo aapke paas pehle se tha)
+                    frontImagePath = item.plateImageRes,
+                    backImagePath = item.plateImageBackRes,
+                    embossedFrontImagePath = item.embossedFrontImagePath,
+                    embossedBackImagePath = item.embossedBackImagePath,
+                    orderState = currentState.orderState.copy(
+                        historyPlateId = item.id,
+                        vehicleName = item.plateNumber,
+                        vehicleCategory = item.category,
+                        province = item.province
+                    )
                 )
             }
         }
     }
 
-    fun resetOrderState() {
-        _uiState.update { currentState ->
-            currentState.copy(
-                orderState = OrderUiState(
-                    availablePlateTypes = currentState.orderState.availablePlateTypes,
-                    availableShippingMethods = currentState.orderState.availableShippingMethods,
-                    availableAddsOns = currentState.orderState.availableAddsOns
+        fun resetOrderState() {
+            _uiState.update { currentState ->
+                currentState.copy(
+                    orderState = OrderUiState(
+                        availablePlateTypes = currentState.orderState.availablePlateTypes,
+                        availableShippingMethods = currentState.orderState.availableShippingMethods,
+                        availableAddsOns = currentState.orderState.availableAddsOns,
+
+                    )
                 )
-            )
+            }
         }
-    }
 
     fun updateAddressDetails(newOrderState: OrderUiState) {
         _uiState.update { it.copy(orderState = newOrderState) }
@@ -607,7 +652,8 @@ class PlateViewModel(
         _uiState.update { currentState ->
             currentState.copy(
                 orderState = currentState.orderState.copy(
-                    selectedPlateType = plateType
+                    selectedPlateType = plateType,
+                    basePrice = plateType.price
                 )
             )
         }
@@ -616,7 +662,7 @@ class PlateViewModel(
     fun getImagePathForPlateType(title: String): String {
         return when {
             title.contains("Painted", ignoreCase = true) -> _uiState.value.frontImagePath ?: ""
-            title.contains("Embossed", ignoreCase = true) -> ""
+            title.contains("Embossed", ignoreCase = true) -> _uiState.value.embossedFrontImagePath ?: ""
             else -> ""
         }
     }
@@ -624,6 +670,7 @@ class PlateViewModel(
     fun toggleAddon(addon: AddsOn, isChecked: Boolean) {
         _uiState.update { currentState ->
             val currentOrderState = currentState.orderState
+            // 1. List update karein
             val updatedSelectedAddsOns = currentOrderState.selectedAddsOns.toMutableList()
 
             if (isChecked) {
@@ -634,9 +681,13 @@ class PlateViewModel(
                 updatedSelectedAddsOns.remove(addon)
             }
 
+            // 2. Ab 'currentList' ki jagah 'updatedSelectedAddsOns' use karein
+            val totalDouble = updatedSelectedAddsOns.sumOf { it.price }
+
             currentState.copy(
                 orderState = currentOrderState.copy(
-                    selectedAddsOns = updatedSelectedAddsOns
+                    selectedAddsOns = updatedSelectedAddsOns,
+                    addOnsPrice = totalDouble
                 )
             )
         }
@@ -646,7 +697,8 @@ class PlateViewModel(
         _uiState.update { currentState ->
             currentState.copy(
                 orderState = currentState.orderState.copy(
-                    selectedShippingMethod = method
+                    selectedShippingMethod = method,
+                    shippingPrice = method.price
                 )
             )
         }
@@ -656,12 +708,15 @@ class PlateViewModel(
         val currentState = _uiState.value
         val orderState = currentState.orderState
         println("DEBUG_ORDER: submitOrder called")
-
+        val frontBytes = getBytesFromPath(currentState.frontImagePath)
+        val base64Image = frontBytes?.encodeBase64()
         viewModelScope.launch {
-            _uiState.update { it.copy(isSubmitting  = true, exportError = null) }
+            _uiState.update { it.copy(isSubmitting = true, exportError = null) }
             println("DEBUG_ORDER: isSubmitting = true")
-
-            // Order domain model banao
+            val frontBytes = getBytesFromPath(currentState.frontImagePath)
+            println("DEBUG_FIELDS: plateType=${orderState.selectedPlateType?.title}")
+            println("DEBUG_FIELDS: shipping=${orderState.selectedShippingMethod?.title}")
+            println("DEBUG_FIELDS: addons=${orderState.selectedAddsOns.map { it.title }}")
             val order = Order(
                 fullName = orderState.fullName,
                 contactNumber = orderState.phone,
@@ -675,27 +730,30 @@ class PlateViewModel(
                 vehicleType = currentState.selectedVehicle?.name ?: "",
                 vehicleProvince = currentState.selectedProvince?.name ?: "",
                 plateType = orderState.selectedPlateType?.title,
-                shippingMethod = orderState.shippingMethod?.name,
-                addOns = buildList {
-                    if (orderState.hasPlateFrame) add("Plate Frame")
-                    if (orderState.hasScrewsKit) add("Screws & Mounting Kit")
-                },
-                image = currentState.frontImagePath
+                shippingMethod = orderState.selectedShippingMethod?.title ?: "",
+                addOns = orderState.selectedAddsOns.map { it.title },
+                image = null
             )
-
+            println("DEBUG_PAYLOAD: $order")
             // UseCase ko Order pass karo
-            submitOrderUseCase(order)
+            submitOrderUseCase(order, frontBytes)
                 .onSuccess {
                     println("DEBUG_ORDER: SUCCESS")
-                    _uiState.update { it.copy(isSubmitting  = false, exportSuccess = true) }
+                    _uiState.update { it.copy(isSubmitting = false, exportSuccess = true) }
                     onNavigateSuccess()
                 }
                 .onFailure { e ->
                     println("DEBUG_ORDER: FAILURE = ${e.message}")
-                    _uiState.update { it.copy(isSubmitting  = false, exportError = e.message) }
+                    println("DEBUG_ORDER: STACKTRACE = ${e.stackTraceToString()}")
+                    if (e is io.ktor.client.plugins.ResponseException) {
+                        println("DEBUG_ORDER: SERVER_RESPONSE_CODE = ${e.response.status}")
+                    }
+
+                    _uiState.update { it.copy(isSubmitting = false, exportError = e.message ?: "Unknown Error") }
                 }
         }
     }
+
 
 }
 

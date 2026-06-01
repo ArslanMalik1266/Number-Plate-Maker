@@ -12,5 +12,5 @@ interface OrderRepository {
     suspend fun getShippingMethods(): Result<List<ShippingMethodDomain>>
     suspend fun getAddsOns(): Result<List<AddsOn>>
 
-    suspend fun submitOrder(request: Order): Result<Unit>
+    suspend fun submitOrder(request: Order, imageBytes: ByteArray?): Result<Unit>
 }

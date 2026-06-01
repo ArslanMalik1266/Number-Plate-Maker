@@ -191,7 +191,8 @@ fun NavGraphBuilder.appNavigation(
             onContinueClick = {
                 navController.navigate(Screen.OrderSuccess.route)
             },
-            viewModel = viewModel
+            viewModel = viewModel,
+
         )
     }
     composable(Screen.OrderSuccess.route) {

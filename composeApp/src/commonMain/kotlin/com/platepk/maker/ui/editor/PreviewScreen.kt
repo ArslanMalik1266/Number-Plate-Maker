@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,7 +49,7 @@ import com.platepk.maker.ui.theme.subtitleGray
 import com.platepk.maker.util.addPressEffect
 import com.platepk.maker.util.formatTimestamp
 import com.platepk.maker.util.toByteArray
-import kotlinx.coroutines.delay
+import com.platepk.maker.util.toSoftwareBitmap
 import kotlinx.coroutines.launch
 import numberplatemaker.composeapp.generated.resources.Res
 import numberplatemaker.composeapp.generated.resources.ic_download
@@ -71,6 +72,15 @@ fun PreviewScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val frontLayer = rememberGraphicsLayer()
     val backLayer = rememberGraphicsLayer()
+
+    // ── OFFSCREEN LAYERS (invisible, placed at -10000 so user never sees them) ──
+    val embossedFrontLayer = rememberGraphicsLayer()
+    val embossedBackLayer = rememberGraphicsLayer()
+    // These two flags flip to true the first time each offscreen canvas draws itself.
+    // Once BOTH are true we have all 4 captures ready → trigger save.
+    var embossedFrontReady by remember { mutableStateOf(false) }
+    var embossedBackReady by remember { mutableStateOf(false) }
+
     val plateData = remember(plateId, uiState.savedPlates) {
         uiState.savedPlates.find { it.id == plateId }
     }
@@ -80,7 +90,14 @@ fun PreviewScreen(
 
     val frontConfig = uiState.frontPlate?.config
     val backConfig = uiState.backPlate?.config
+    var isEmbossed by remember { mutableStateOf(false) }
+    val frontImagePath = if (isEmbossed)
+        plateData?.embossedFrontImagePath
+    else plateData?.plateImageRes
 
+    val backImagePath = if (isEmbossed)
+        plateData?.embossedBackImagePath
+    else plateData?.plateImageBackRes
     var showIndicator by remember { mutableStateOf(isFromRegistration) }
 
     LaunchedEffect(uiState.exportSuccess) {
@@ -89,22 +106,31 @@ fun PreviewScreen(
         }
     }
 
-    LaunchedEffect(uiState.frontPlate, uiState.backPlate) {
-        if (plateId == null && uiState.frontPlate != null && uiState.backPlate != null) {
-            scope.launch {
-                try {
-                    delay(500)
-                    val frontBitmap = frontLayer.toImageBitmap()
-                    val backBitmap = backLayer.toImageBitmap()
-                    val frontBytes = frontBitmap.toByteArray(ExportFormat.PNG)
-                    val backBytes = backBitmap.toByteArray(ExportFormat.PNG)
-                    viewModel.savePlateImages(frontBytes, backBytes)
-                } catch (e: Exception) {
-                    println("DEBUG_CAPTURE_ERROR: ${e.message}")
-                }
-            }
+    // ── CAPTURE TRIGGER ─────────────────────────────────────────────────────────
+    // Fires when both offscreen canvases have rendered at least one frame.
+    // No delays, no material switching — painted is captured from visible layers,
+    // embossed is captured from the hidden offscreen layers.
+    LaunchedEffect(embossedFrontReady, embossedBackReady, uiState.isAlreadySaved) {
+        if (!embossedFrontReady || !embossedBackReady) return@LaunchedEffect
+        if (uiState.isAlreadySaved) return@LaunchedEffect
+        if (plateId != null) return@LaunchedEffect
+        if (uiState.frontPlate == null || uiState.backPlate == null) return@LaunchedEffect
+
+        try {
+            val paintedFrontBytes  = frontLayer.toImageBitmap().toSoftwareBitmap().toByteArray(ExportFormat.PNG)
+            val paintedBackBytes   = backLayer.toImageBitmap().toSoftwareBitmap().toByteArray(ExportFormat.PNG)
+            val embossedFrontBytes = embossedFrontLayer.toImageBitmap().toSoftwareBitmap().toByteArray(ExportFormat.PNG)
+            val embossedBackBytes  = embossedBackLayer.toImageBitmap().toSoftwareBitmap().toByteArray(ExportFormat.PNG)
+
+            viewModel.savePlateImages(
+                paintedFrontBytes, paintedBackBytes,
+                embossedFrontBytes, embossedBackBytes
+            )
+        } catch (e: Exception) {
+            println("ERROR capturing plates: ${e.message}")
         }
     }
+    // ────────────────────────────────────────────────────────────────────────────
 
     Scaffold(
         topBar = {
@@ -115,14 +141,21 @@ fun PreviewScreen(
                 onBackClick = onBackClick,
                 showSteps = false,
                 actions = {
-                    // Painted / Embossed style toggle.
-                    // Reads the live material from whichever plate is on screen
-                    // (front is the source of truth — back is kept in sync by the VM).
                     val activeMaterial = uiState.frontPlate?.config?.materialType
                         ?: uiState.orderState.selectedMaterial
                     PlateStyleToggle(
-                        selected = activeMaterial,
-                        onSelected = { viewModel.setRegistrationMaterial(it) }
+                        selected = if (plateId != null) {
+                            if (isEmbossed) MaterialType.EMBOSSED else MaterialType.PAINTED
+                        } else {
+                            activeMaterial
+                        },
+                        onSelected = { material ->
+                            if (plateId != null) {
+                                isEmbossed = (material == MaterialType.EMBOSSED)
+                            } else {
+                                viewModel.setRegistrationMaterial(material)
+                            }
+                        }
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     IconButton(
@@ -142,10 +175,9 @@ fun PreviewScreen(
                                     color = MaterialTheme.colorScheme.surface,
                                     shape = CircleShape
                                 )
-                                .clip(CircleShape)
-                            ,
+                                .clip(CircleShape),
                             contentAlignment = Alignment.Center
-                        ){
+                        ) {
                             Icon(Icons.Default.Home, null, tint = MaterialTheme.colorScheme.onBackground)
                         }
                     }
@@ -169,7 +201,6 @@ fun PreviewScreen(
                             .size(56.dp)
                             .addPressEffect {
                                 scope.launch {
-                                    delay(150)
                                     if (!uiState.exporting) showExportSheet = true
                                 }
                             }
@@ -188,9 +219,7 @@ fun PreviewScreen(
                                 contentDescription = "Download",
                                 tint = Color.White
                             )
-
                         }
-
                     }
                     Box(
                         modifier = Modifier
@@ -254,7 +283,7 @@ fun PreviewScreen(
                             Spacer(modifier = Modifier.height(8.dp))
 
                             AsyncImage(
-                                model = plateData.plateImageRes,
+                                model = frontImagePath,
                                 contentDescription = "Front Plate",
                                 modifier = Modifier.fillMaxWidth().wrapContentHeight(),
                                 contentScale = ContentScale.Fit
@@ -269,7 +298,7 @@ fun PreviewScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             AsyncImage(
-                                model = plateData.plateImageBackRes,
+                                model = backImagePath,
                                 contentDescription = "Back Plate",
                                 modifier = Modifier.fillMaxWidth().wrapContentHeight(),
                                 contentScale = ContentScale.Fit
@@ -385,6 +414,64 @@ fun PreviewScreen(
                     )
                 }
             }
+
+            // ── OFFSCREEN EMBOSSED CANVASES ──────────────────────────────────────
+            // requiredSize forces Compose to measure & draw them at real plate dimensions.
+            // layout { ... place(-10000, -10000) } pushes them completely off-screen so
+            // the user never sees them — but Compose still renders them, so the
+            // GraphicsLayer records a real image that we can capture.
+            // Only active for new plates (plateId == null) that haven't been saved yet.
+            if (plateId == null && !uiState.isAlreadySaved) {
+
+                if (frontConfig != null) {
+                    // fillMaxWidth so PlateCanvas gets the same width as the visible plate,
+                    // then aspectRatio inside PlateCanvas sizes the height correctly.
+                    // layout{} reports 0×0 to parent so it takes no space on screen,
+                    // but place(-10000,-10000) keeps it off-screen while still being drawn.
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .layout { measurable, constraints ->
+                                val placeable = measurable.measure(constraints)
+                                layout(0, 0) { placeable.place(-10000, -10000) }
+                            }
+                            .drawWithContent {
+                                embossedFrontLayer.record { this@drawWithContent.drawContent() }
+                                drawContent()
+                                if (!embossedFrontReady) embossedFrontReady = true
+                            }
+                    ) {
+                        PlateCanvas(
+                            config = frontConfig.copy(materialType = MaterialType.EMBOSSED),
+                            modifier = Modifier.fillMaxWidth().wrapContentHeight()
+                        )
+                    }
+                }
+
+                if (backConfig != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .layout { measurable, constraints ->
+                                val placeable = measurable.measure(constraints)
+                                layout(0, 0) { placeable.place(-10000, -10000) }
+                            }
+                            .drawWithContent {
+                                embossedBackLayer.record { this@drawWithContent.drawContent() }
+                                drawContent()
+                                if (!embossedBackReady) embossedBackReady = true
+                            }
+                    ) {
+                        PlateCanvas(
+                            config = backConfig.copy(materialType = MaterialType.EMBOSSED),
+                            modifier = Modifier.fillMaxWidth().wrapContentHeight()
+                        )
+                    }
+                }
+            }
+            // ────────────────────────────────────────────────────────────────────
         }
     }
     if (showExportSheet) {
@@ -540,20 +627,13 @@ fun SavedToRecentsIndicator(
         }
     }
 }
-/**
- * Compact segmented control for the Preview toolbar.
- * Lets the user flip the rendered plate between PAINTED (flat ink) and
- * EMBOSSED (raised letter look) in one tap.
- *
- * Sits to the LEFT of the Home button so the eye reads:
- *   [ Painted | Embossed ]  ( Home )
- */
+
 @Composable
 private fun PlateStyleToggle(
     selected: MaterialType,
     onSelected: (MaterialType) -> Unit
 ) {
-    val activeBg = Color(0xFF0C8A53)        // brand green, used elsewhere on this screen
+    val activeBg = Color(0xFF0C8A53)
     val trackBg = MaterialTheme.colorScheme.surface
     val borderColor = Color(0xFFE5E2DA)
 

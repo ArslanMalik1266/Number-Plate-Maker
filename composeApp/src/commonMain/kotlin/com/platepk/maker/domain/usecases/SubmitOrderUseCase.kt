@@ -4,7 +4,7 @@ import com.platepk.maker.domain.models.Order
 import com.platepk.maker.domain.repo.OrderRepository
 
 class SubmitOrderUseCase(private val repository: OrderRepository) {
-    suspend operator fun invoke(order: Order): Result<Unit> {
-        return repository.submitOrder(order)
+    suspend operator fun invoke(order: Order, imageBytes: ByteArray?): Result<Unit> {
+        return repository.submitOrder(order, imageBytes)
     }
 }

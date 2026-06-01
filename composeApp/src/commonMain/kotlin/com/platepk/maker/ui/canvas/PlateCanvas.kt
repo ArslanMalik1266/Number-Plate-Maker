@@ -10,8 +10,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -3696,54 +3700,30 @@ internal fun DrawScope.drawPlateRegistration(
         }
     }
 }
-
-/**
- * The actual emboss recipe — extracted so it can be tuned in one place.
- * Offsets are derived from the rendered line height so the effect scales
- * with whatever font size the caller measured the text at.
- */
-/**
- * The actual emboss recipe — extracted so it can be tuned in one place.
- * Offsets are derived from the rendered line height so the effect scales
- * with whatever font size the caller measured the text at.
- */
 private fun DrawScope.drawEmbossedRegistration(
     textLayoutResult: androidx.compose.ui.text.TextLayoutResult,
     topLeft: Offset
 ) {
-    // Hard cap at 3px so the effect never becomes a blob on large back-plate fonts.
-    // Minimum 1px so tiny bike plates still show something.
     val unit = (textLayoutResult.size.height * 0.014f).coerceIn(1f, 3f)
-
-    // Layer 1 — distant block shadow (plate surface shadow).
-    // Subtle — just enough to imply the letter is lifted off the surface.
     drawText(
         textLayoutResult,
         topLeft = Offset(topLeft.x + unit * 2f, topLeft.y + unit * 2f),
         color = Color.Black,
         alpha = 0.10f
     )
-
-    // Layer 2 — bottom-right extrusion wall (dark side face of the raised letter).
-    // This is what reads as the "depth" of the extrusion.
-    // Alpha kept moderate so it tints, not dominates.
     drawText(
         textLayoutResult,
         topLeft = Offset(topLeft.x + unit * 1f, topLeft.y + unit * 1f),
         color = Color.Black,
         alpha = 0.40f
     )
-
-    // Layer 3 — top-left extrusion wall (light side face catching the light).
-    // Kept subtle — a hint of brightness, not a white glow.
     drawText(
         textLayoutResult,
         topLeft = Offset(topLeft.x - unit * 0.6f, topLeft.y - unit * 0.6f),
         color = Color.White,
         alpha = 0.35f
     )
-
-    // Layer 4 — letter face on top. Full color, no offset.
     drawText(textLayoutResult, topLeft = topLeft)
 }
+
 

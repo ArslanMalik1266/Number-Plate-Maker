@@ -18,5 +18,5 @@ data class Order(
     val shippingMethod: String?,
     val addOns: List<String>?,
     val status: String? = null,
-    val createdAt: String = ""
+    val createdAt: String = "",
 )

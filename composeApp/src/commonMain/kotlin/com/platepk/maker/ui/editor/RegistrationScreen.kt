@@ -155,7 +155,8 @@ fun RegistrationScreen(
             Spacer(modifier = Modifier.weight(0.5f))
             Box(
                 modifier = Modifier.fillMaxWidth()
-                    .addPressEffect { onGenerateClick(registrationNumber) }.height(56.dp)
+                    .addPressEffect {
+                        onGenerateClick(registrationNumber) }.height(56.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(if (isButtonEnabled) Color(0xFF0C8A53) else Color.Gray),
                 contentAlignment = Alignment.Center

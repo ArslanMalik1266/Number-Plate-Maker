@@ -13,7 +13,7 @@ interface PlateApiService {
     suspend fun getPlateTypes(): BaseResponseDto<PlateTypeDto>
     suspend fun getShippingMethods(): BaseResponseDto<ShippingMethodDto>
     suspend fun getAddsOns(): BaseResponseDto<AddsOnDto>
-    suspend fun submitOrder(request: OrderRequest): HttpResponse
+    suspend fun submitOrder(request: OrderRequest, imageBytes: ByteArray?): HttpResponse
 
 
 }

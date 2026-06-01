@@ -26,7 +26,10 @@ data class PlateUiState(
     val exportError: String? = null,
     val loading : Boolean = true,
     val frontImagePath: String? = null,
-    val backImagePath: String? = null
+    val backImagePath: String? = null,
+    val embossedFrontImagePath: String? = null,
+    val embossedBackImagePath: String? = null,
+    val isAlreadySaved: Boolean = false
 )
 
 data class PlateModel(
@@ -165,5 +168,13 @@ data class OrderUiState(
     val isRegistrationCorrect: Boolean = false,
     val isTermsAgreed: Boolean = false,
     val isNonRefundableUnderstood: Boolean = false,
-    val showValidationErrors: Boolean = false
-)
+    val showValidationErrors: Boolean = false,
+    val historyPlateId: String? = null,
+    val vehicleName: String = "",
+    val vehicleCategory: String = "",
+    val basePrice: Double = 0.0,
+    val addOnsPrice: Double = 0.0,
+    val shippingPrice: Double = 0.0,
+){
+    val totalPrice: Double get() = basePrice + addOnsPrice + shippingPrice
+}

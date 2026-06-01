@@ -19,6 +19,7 @@ fun Order.toRequest(): OrderRequest {
         vehicle_province = this.vehicleProvince,
         plate_type = this.plateType,
         shipping_method = this.shippingMethod,
-        add_ons = this.addOns ?: emptyList()
+        add_ons = this.addOns ?: emptyList(),
+
     )
 }

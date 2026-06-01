@@ -25,8 +25,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,6 +38,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.platepk.maker.domain.models.OrderUiState
+import com.platepk.maker.domain.models.RecentPlateItem
 import com.platepk.maker.ui.PlateViewModel
 import com.platepk.maker.ui.canvas.PlateCanvas
 import com.platepk.maker.ui.order.components.OrderStepTopAppBar
@@ -46,10 +50,17 @@ import com.platepk.maker.util.addPressEffect
 fun ReviewOrderScreen(
     viewModel: PlateViewModel,
     onBackClick: () -> Unit,
-    onContinueClick: () -> Unit
+    onContinueClick: () -> Unit,
+    plateId: String? = null,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val orderState = uiState.orderState
+    val plateData = remember(plateId, uiState.savedPlates) {
+        uiState.savedPlates.find { it.id == plateId }
+    }
+    LaunchedEffect(plateId) {
+        plateId?.let { viewModel.loadHistoryPlateData(it) }
+    }
 
     val isAllConfirmed = orderState.isRegistrationCorrect &&
             orderState.isTermsAgreed &&
@@ -127,7 +138,9 @@ fun ReviewOrderScreen(
             item {
                 OrderSummaryCard(
                     viewModel = viewModel,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    orderState = orderState,
+                    plateData = plateData
                 )
             }
             item {
@@ -160,7 +173,7 @@ fun ReviewOrderScreen(
                     color = Color.Gray,
                     modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
                 )
-                PricingSection()
+                PricingSection(orderState = orderState)
             }
             item {
                 Text(
@@ -171,7 +184,6 @@ fun ReviewOrderScreen(
                     modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
                 )
 
-                // UI State mein 3 booleans add karne honge (orderState mein)
                 CheckboxRow(
                     text = "I confirm the registration number is correct.",
                     checked = orderState.isRegistrationCorrect,
@@ -197,7 +209,9 @@ fun ReviewOrderScreen(
 @Composable
 fun OrderSummaryCard(
     viewModel: PlateViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    orderState: OrderUiState,
+    plateData: RecentPlateItem?
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -259,15 +273,39 @@ fun OrderSummaryCard(
             // Details Column
             Column {
                 Text(
-                    "REGISTRATION",
+                    text = "REGISTRATION",
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Gray
                 )
-                Text("AD DS", fontSize = 18.sp, fontWeight = FontWeight.Black)
-                Text("Premium Embossed Metal", fontSize = 12.sp, color = Color.Gray)
-                Text("Quantity: 2 (Front + Back)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Text("Add-ons: Plate Frame", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                val registrationDisplay = orderState.vehicleName.ifBlank { uiState.registrationNumber }
+                // Dynamic Registration Number
+                Text(
+                    text = registrationDisplay,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Black
+                )
+
+                // Dynamic Plate Type
+                Text(
+                    text = orderState.selectedPlateType?.title ?: "Standard Plate",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+
+                // Dynamic Quantity (Logic: Front + Back plate)
+                Text(
+                    text = "Quantity: 2 (Front + Back)",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                val addOnsText = uiState.orderState.selectedAddsOns.joinToString(", ") { it.title }
+                Text(
+                    text = "Add-ons: ${if (addOnsText.isEmpty()) "None" else addOnsText}",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }
@@ -331,16 +369,16 @@ fun DeliveryInfoCard(
 }
 
 @Composable
-fun PricingSection() {
+fun PricingSection(orderState: OrderUiState) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            PricingRow("Plate (pair)", "Rs. 1,500")
-            PricingRow("Add-ons", "Rs. 400")
-            PricingRow("Delivery · 1–2 days", "Rs. 600")
+            PricingRow("Plate (pair)", "Rs. ${orderState.basePrice}")
+            PricingRow("Add-ons", "Rs. ${orderState.addOnsPrice}")
+            PricingRow("Delivery", "Rs. ${orderState.shippingPrice}")
 
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 8.dp),
@@ -353,7 +391,7 @@ fun PricingSection() {
             ) {
                 Text("Total", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 Text(
-                    "Rs. 2,500",
+                    "Rs. ${orderState.totalPrice}",
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
                     color = Color(0xFF0C8A53)

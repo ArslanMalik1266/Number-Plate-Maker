@@ -8,5 +8,7 @@ data class RecentPlateItem(
     val timestamp: Long,
     val plateImageRes: String? = null,
     val plateImageBackRes: String? = null,
+    val embossedFrontImagePath: String? = null,
+    val embossedBackImagePath: String? = null,
     val pdfPath: String? = null
 )

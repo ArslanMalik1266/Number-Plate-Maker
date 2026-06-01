@@ -12,11 +12,12 @@ fun PlateEntity.toDomain(): RecentPlateItem {
         timestamp = this.issuedDate,
         plateImageRes = this.frontImagePath,
         plateImageBackRes = this.backImagePath,
+        embossedFrontImagePath = this.embossedFrontImagePath,
+        embossedBackImagePath = this.embossedBackImagePath,
         pdfPath = this.pdfFilePath?.ifEmpty { null }
     )
 }
 
-// Domain (UI) -> Entity (DB)
 fun RecentPlateItem.toEntity(): PlateEntity {
     return PlateEntity(
         id = this.id.toLongOrNull() ?: 0L,
@@ -26,6 +27,8 @@ fun RecentPlateItem.toEntity(): PlateEntity {
         issuedDate = this.timestamp,
         frontImagePath = this.plateImageRes?.ifEmpty { null },
         backImagePath = this.plateImageBackRes?.ifEmpty { null },
+        embossedFrontImagePath = this.embossedFrontImagePath?.ifEmpty { null },
+        embossedBackImagePath = this.embossedBackImagePath?.ifEmpty { null },
         pdfFilePath = this.pdfPath?.ifEmpty { null },
         exportFormat = if (!this.pdfPath.isNullOrEmpty()) "PDF" else "PNG"
     )

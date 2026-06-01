@@ -9,6 +9,7 @@ import com.platepk.maker.domain.models.Order
 import com.platepk.maker.domain.models.PlateType
 import com.platepk.maker.domain.models.ShippingMethodDomain
 import com.platepk.maker.domain.repo.OrderRepository
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 
 class OrderRepositoryImpl(
@@ -42,14 +43,16 @@ class OrderRepositoryImpl(
         }
     }
 
-    override suspend fun submitOrder(order: Order): Result<Unit> {
+    override suspend fun submitOrder(order: Order, imageBytes: ByteArray?): Result<Unit> {
         return try {
             val request = order.toRequest()
-            val response = apiService.submitOrder(request)  // HttpResponse
+            val response = apiService.submitOrder(request, imageBytes)
 
             if (response.status.isSuccess()) {
                 Result.success(Unit)
             } else {
+                val errorBody = response.bodyAsText()
+                println("DEBUG_SERVER_ERROR: $errorBody")
                 Result.failure(Exception("Server error: ${response.status.value}"))
             }
         } catch (e: Exception) {

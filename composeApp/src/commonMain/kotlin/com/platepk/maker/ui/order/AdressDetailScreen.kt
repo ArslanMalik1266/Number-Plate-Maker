@@ -2,6 +2,7 @@ package com.platepk.maker.ui.order
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,17 +16,22 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,12 +63,29 @@ import com.platepk.maker.util.addPressEffect
 
 @Composable
 fun AddressDetailScreen(
-    viewModel: PlateViewModel, onBackClick: () -> Unit, onContinueClick: () -> Unit
+    viewModel: PlateViewModel, onBackClick: () -> Unit, onContinueClick: () -> Unit, plateId: String? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val plateData = remember(plateId, uiState.savedPlates) {
+        uiState.savedPlates.find { it.id == plateId }
+    }
     val orderState = uiState.orderState
     val showErrors = orderState.showValidationErrors
     val focusManager = LocalFocusManager.current
+
+    LaunchedEffect(orderState.availableShippingMethods) {
+        if (orderState.selectedShippingMethod == null && orderState.availableShippingMethods.isNotEmpty()) {
+            val standard = orderState.availableShippingMethods.find { it.title == "Standard Shipping" }
+            standard?.let { viewModel.onShippingMethodSelected(it) }
+        }
+    }
+    LaunchedEffect(plateId) {
+        plateId?.let { viewModel.loadHistoryPlateData(it) }
+    }
+    val registrationDisplay = orderState.vehicleName.ifBlank { uiState.registrationNumber }
+    val categoryDisplay = orderState.vehicleCategory.ifBlank { uiState.selectedVehicle?.name ?: "" }
+    val provinceDisplay = orderState.province.ifBlank { uiState.selectedProvince?.name ?: "" }
+
     Scaffold(topBar = {
         OrderStepTopAppBar(
             title = "Delivery", currentStep = 2, totalSteps = 3, onBackClick = onBackClick
@@ -114,6 +137,7 @@ fun AddressDetailScreen(
                 FieldLabel("FULL NAME *")
                 CustomTextField(
                     orderState.fullName,
+                    placeholder = "Enter your full name",
                     isError = showErrors && orderState.fullName.isBlank(),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     keyboardActions = KeyboardActions(onNext = {
@@ -158,7 +182,7 @@ fun AddressDetailScreen(
             item {
                 FieldLabel("EMAIL")
                 CustomTextField(
-                    orderState.email, "optional",
+                    orderState.email, placeholder = "e.g. name@example.com",
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     keyboardActions = KeyboardActions(onNext = {
                         focusManager.moveFocus(
@@ -193,7 +217,7 @@ fun AddressDetailScreen(
             item {
                 FieldLabel("CITY *")
                 CustomTextField(
-                    orderState.city, "Select city",
+                    orderState.city, placeholder = "Enter city name",
                     isError = showErrors && orderState.city.isBlank(),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     keyboardActions = KeyboardActions(onNext = {
@@ -212,6 +236,7 @@ fun AddressDetailScreen(
                 FieldLabel("AREA / TOWN")
                 CustomTextField(
                     orderState.area,
+                    placeholder = "Enter area or sector",
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     keyboardActions = KeyboardActions(onNext = {
                         focusManager.moveFocus(
@@ -280,17 +305,17 @@ fun AddressDetailScreen(
                         .background(MaterialTheme.colorScheme.surface)
                         .padding(16.dp)
                 ) {
-                    ReadOnlyInfoRow("Registration", "AD DS")
+                    ReadOnlyInfoRow("Registration", registrationDisplay)
                     HorizontalDivider(
                         modifier = Modifier.padding(vertical = 4.dp),
                         color = Color.LightGray.copy(alpha = 0.3f)
                     )
-                    ReadOnlyInfoRow("Vehicle type", "Motorcycle")
+                    ReadOnlyInfoRow("Vehicle type", categoryDisplay)
                     HorizontalDivider(
                         modifier = Modifier.padding(vertical = 4.dp),
                         color = Color.LightGray.copy(alpha = 0.3f)
                     )
-                    ReadOnlyInfoRow("Province", "Punjab")
+                    ReadOnlyInfoRow("Province", provinceDisplay)
                 }
             }
         }
@@ -410,40 +435,46 @@ fun ProvinceSpinner(
     onProvinceSelected: (String) -> Unit
 ) {
     val provinces = listOf(
-        "Punjab",
-        "Sindh",
-        "Khyber Pakhtunkhwa",
-        "Balochistan",
-        "Islamabad",
-        "Azad Kashmir",
-        "Gilgit-Baltistan"
+        "Punjab", "Sindh", "Khyber Pakhtunkhwa", "Balochistan",
+        "Islamabad", "Azad Kashmir", "Gilgit-Baltistan"
     )
     var expanded by remember { mutableStateOf(false) }
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded }
-    ) {
+    Box(modifier = Modifier.fillMaxWidth()) {
         OutlinedTextField(
             value = selectedProvince,
             onValueChange = {},
             readOnly = true,
-            placeholder = { Text("Select province", fontSize = 14.sp) },
+            placeholder = { Text("Select your province", fontSize = 14.sp) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .menuAnchor(),
+            // Important: enabled = false krne se ye field input nahi legi
+            // aur hum puray container pe click handle kar saken ge
+            enabled = false,
+            modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledContainerColor = MaterialTheme.colorScheme.surface,
+                disabledIndicatorColor = Color.Transparent,
+                disabledTrailingIconColor = MaterialTheme.colorScheme.onSurface
             )
         )
-        ExposedDropdownMenu(
+
+        // Yeh Box TextField ke bilkul uper baithe ga aur click catch kare ga
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clickable { expanded = true }
+        )
+
+        // Dropdown Menu
+        DropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .background(MaterialTheme.colorScheme.surface)
+                .clip(RoundedCornerShape(12.dp))
         ) {
             provinces.forEach { province ->
                 DropdownMenuItem(
